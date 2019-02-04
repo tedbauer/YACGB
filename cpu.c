@@ -24,19 +24,24 @@ typedef struct cpu_state {
 cpu_state_t* cpu;
 mem_state_t* mem;
 
-void update_preg(reg_t r, void* new_val) {
+typedef union {
+	uint8_t bit8;
+	uint16_t bit16;
+} mem_t;
+
+void update_preg(reg_t r, mem_t new_val) {
 	switch(r) {
 		case AF:
-			cpu->registers[A] = (*(uint16_t*) new_val);
+			cpu->registers[A] = new_val.bit16;
 			break;
 		case BC:
-			cpu->registers[B] = (*(uint16_t*) new_val);
+			cpu->registers[B] = new_val.bit16;
 			break;
 		case DE:
-			cpu->registers[D] = (*(uint16_t*) new_val);
+			cpu->registers[D] = new_val.bit16;
 			break;
 		case HL:
-			cpu->registers[H] = (*(uint16_t*) new_val);
+			cpu->registers[H] = new_val.bit16;
 			break;
 		default:
 			perror("Non-pair supplied to update_preg.");
@@ -44,11 +49,11 @@ void update_preg(reg_t r, void* new_val) {
 }
 
 /* Place contents of new_val in register r. */
-void update_reg(reg_t r, void* new_val) {
+void update_reg(reg_t r, mem_t new_val) {
 	switch(r) {
 		case PC:
 		case SP:
-			cpu->registers[r] = (*(uint16_t*) new_val);
+			cpu->registers[r] = new_val.bit16;
 			break;
 		case AF:
 		case BC:
@@ -57,19 +62,58 @@ void update_reg(reg_t r, void* new_val) {
 			update_preg(r, new_val);
 			break;
 		default:
-			cpu->registers[r] = (*(uint8_t*) new_val);
+			cpu->registers[r] = new_val.bit8;
 	}
 }
 
-void* read_reg(reg_t r) {
-	case PC:
-	case SP:
-
+/* FIXME i think getting the 16bit vals is wrong */
+mem_t read_preg(reg_t r) {
+	mem_t result;
+	switch(r) {
+		case AF:
+			result.bit16 = cpu->registers[A];
+			break;
+		case BC:
+			result.bit16 = cpu->registers[B];
+			break;
+		case DE:
+			result.bit16 = cpu->registers[D];
+			break;
+		case HL:
+			result.bit16 = cpu->registers[H];
+			break;
+		default:
+			perror("Non-pair supplied to read_preg.");
+	}
+	return result;
 }
 
-char* read_nn() {
+/* FIXME i think getting the 16bit vals is wrong */
+mem_t read_reg(reg_t r) {
+	mem_t result;
+	switch(r) {
+		case PC:
+			result.bit16 = cpu->registers[r];
+			break;
+		case SP:
+			result.bit16 = cpu->registers[r];
+			break;
+		case AF:
+		case BC:
+		case DE:
+		case HL:
+			return read_preg(r);
+		default:
+			result.bit8 = cpu->registers[r];
+	}
+
+	return result;
+}
+
+mem_t read_nn() {
 	perror("Implement me!");
-	return 0;
+	mem_t bad;
+	return bad;
 }
 
 void set_lclock(int lclock) {
@@ -87,6 +131,23 @@ int cpu_cleanup() {
 	return 0;
 }
 
+/* FIXME */
+mem_t incr(mem_t val) {
+	mem_t new_val = val;
+	new_val.bit8  += 1;
+	new_val.bit16 += 1;
+	/* FIXME dont do this; augment the mem_t type */
+	return new_val;
+}
+
+mem_t decr(mem_t val) {
+	mem_t new_val = val;
+	new_val.bit8  -= 1;
+	new_val.bit16 -= 1;
+	/* FIXME dont do this; augment the mem_t type */
+	return new_val;
+}
+
 void exec_instr(char* instr) {
 
 	if (strcmp(instr, "00") == 0)  //NOP
@@ -99,24 +160,23 @@ void exec_instr(char* instr) {
 	}
 	else if (strcmp(instr, "02") == 0) //LD (BC), A
 	{
-		perror(instr);
+		update_reg(BC, read_reg(A));
+		set_lclock(8);
 	}
 	else if (strcmp(instr, "03") == 0) //INC BC
 	{
-		uint16_t bc_val = 0;
-		bc_val |= cpu->c;
-		bc_val |= (cpu->b << 8);
-		bc_val += 1;
-		cpu->b = (bc_val & 0xFF00);
-		cpu->c = (bc_val & 0xFF);
+		update_reg(BC, incr(read_reg(BC)));
+		set_lclock(8);
 	}
 	else if (strcmp(instr, "04") == 0) //INC B
 	{
-		perror(instr);
+		update_reg(B, incr(read_reg(B)));
+		set_lclock(4);
 	}
-	else if (strcmp(instr, "05") == 0)
+	else if (strcmp(instr, "05") == 0) //DEC B
 	{
-		perror(instr);
+		update_reg(B, decr(read_reg(B)));
+		set_lclock(4);
 	}
 	else if (strcmp(instr, "06") == 0)
 	{
