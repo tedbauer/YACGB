@@ -3,6 +3,10 @@
 #include "mem.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
+
+#define TRUE  1
+#define FALSE 0
 
 typedef enum {
 	/* 16 bit registers: */
@@ -16,7 +20,14 @@ typedef enum {
 	AF, BC, DE, HL
 } reg_t;
 
-typedef struct cpu_state {
+typedef enum {
+	fC=0, /* Carry */
+	fH=1, /* Half Carry */
+	fN=2, /* Subtract */
+	fZ=3, /* Zero */
+} flag_t;
+
+typedef struct {
 	uint8_t registers[12];
 	unsigned int lc;
 } cpu_state_t;
@@ -49,8 +60,17 @@ void write_reg(reg_t r, mem_t new_val) {
 			cpu->registers[D] = new_val.bit16; break;
 		case HL:
 			cpu->registers[H] = new_val.bit16; break;
+		case A:
+		case B:
+		case C:
+		case D:
+		case E:
+		case F:
+		case H:
+		case L:
+			cpu->registers[r] = new_val.bit8; break;
 		default:
-			cpu->registers[r] = new_val.bit8;
+			perror("Write_reg call failed.");
 	}
 }
 
@@ -98,6 +118,80 @@ mem_t read_reg(reg_t r) {
 	return result;
 }
 
+mem_t lift(unsigned int val) {
+	assert(val > 0);
+	assert(val < 655356);
+	mem_t result;
+	if (val > 255) {
+		result.bit16 = (uint16_t) val;
+		result.tid   = BIT16;
+	} else {
+		result.bit8 = (uint8_t) val;
+		result.tid  = BIT8;
+	}
+	return result;
+}
+
+unsigned int add(unsigned int val1, unsigned int val2) { return val1 + val2; }
+unsigned int sub(unsigned int val1, unsigned int val2) { return val1 - val2; }
+unsigned int xor(unsigned int val1, unsigned int val2) { return val1 ^ val2; }
+unsigned int or(unsigned int val1, unsigned int val2)  { return val1 | val2; }
+unsigned int lshift(unsigned int val1, unsigned int val2)  { return val1 << val2; }
+
+unsigned int eq(unsigned int val1, unsigned int val2)  { return val1 == val2; }
+
+/* Instead of "demoting", grab bottom bits? */
+mem_t binop(unsigned int (*op)(unsigned int, unsigned int), mem_t val1, mem_t val2) {
+	mem_t result;
+	if (val1.tid == BIT8 && val2.tid == BIT8) {
+		result.bit8 = (uint8_t) op((unsigned int)val1.bit8, (unsigned int)val2.bit8);
+		result.tid  = BIT8;
+	} else if (val1.tid == BIT8 && val2.tid == BIT16) {
+		result.bit16 = (uint8_t) op((unsigned int)val1.bit8, (unsigned int)val2.bit16);
+		result.tid  = BIT16;
+	} else if (val1.tid == BIT16 && val2.tid == BIT8) {
+		result.bit16 = (uint8_t) op((unsigned int)val1.bit16, (unsigned int)val2.bit8);
+		result.tid  = BIT16;
+	} else {
+		result.bit16 = (uint8_t) op((unsigned int)val1.bit16, (unsigned int)val2.bit16);
+		result.tid  = BIT16;
+	}
+	return result;
+}
+
+/* Instead of "demoting", grab bottom bits? */
+unsigned int bool_op(unsigned int (*op)(unsigned int, unsigned int), mem_t val1, mem_t val2) {
+	if (val1.tid == BIT8 && val2.tid == BIT8) {
+		return op((unsigned int)val1.bit8, (unsigned int)val2.bit8);
+	} else if (val1.tid == BIT8 && val2.tid == BIT16) {
+		return op((unsigned int)val1.bit8, (unsigned int)val2.bit16);
+	} else if (val1.tid == BIT16 && val2.tid == BIT8) {
+		return op((unsigned int)val1.bit16, (unsigned int)val2.bit8);
+	} else {
+		return op((unsigned int)val1.bit16, (unsigned int)val2.bit16);
+	}
+}
+
+unsigned int if_carry(int bit, mem_t val1, mem_t val2) {
+	perror("Implement me!");
+	return 0;
+}
+
+#define ADD(val1, val2)    binop(sum, val1, val2)
+#define SUB(val1, val2)    binop(sub, val1, val2)
+#define INCR(val)          binop(add, val, lift(1))
+#define DECR(val)          binop(add, val, lift(-1))
+#define XOR(val1, val2)    binop(xor, val1, val2)
+#define OR(val1, val2)     binop(or, val1, val2)
+#define LSHIFT(val1, val2) binop(lshift, val1, val2)
+#define EQUALS(val1, val2) bool_op(eq, val1, val2)
+
+void write_f(flag_t f, int val, int guard) {
+	if (guard) {
+		write_reg(F, OR(read_reg(F), LSHIFT(lift(1), SUB(lift(4), lift(f)))));
+	}
+}
+
 mem_t read_nn() {
 	perror("Implement me!");
 	mem_t bad;
@@ -116,7 +210,7 @@ void set_lclock(int lclock) {
 
 int cpu_init(mem_state_t* new_mem) {
 	mem = new_mem;
-	cpu  = malloc(sizeof(struct cpu_state));
+	cpu  = malloc(sizeof(cpu_state_t)); /* FIXME: can you do this? */
 	return 0;
 }
 
@@ -125,50 +219,29 @@ int cpu_cleanup() {
 	return 0;
 }
 
-mem_t incr(mem_t val) {
-	mem_t result = val;
-	switch(val.tid) {
-		case BIT8:
-			result.bit8 += 1;
-		case BIT16:
-			result.bit16 += 1;
-		default:
-			perror("incr call failed.");
-	}
-	return result;
-}
-
-/* TODO (maybe): combine with incr? */
-mem_t decr(mem_t val) {
-	mem_t result = val;
-	switch(val.tid) {
-		case BIT8:
-			result.bit8 -= 1;
-		case BIT16:
-			result.bit16 -= 1;
-		default:
-			perror("decr call failed.");
-	}
-	return result;
-}
-
-#define INSTR_TABLE(F) \
-	F(0x00, 4,  asm("nop"))                        /* NOP        */ \
-	F(0x01, 12, write_reg(BC, read_nn()))          /* LD BC, nn  */ \
-	F(0x02, 8,  write_reg(BC, read_reg(A)))        /* LD (BC), A */ \
-	F(0x03, 8,  write_reg(BC, incr(read_reg(BC)))) /* INC BC     */ \
-	F(0x04, 4,  write_reg(B, incr(read_reg(B))))   /* INC B      */ \
-	F(0x05, 4,  write_reg(B, decr(read_reg(B))))   /* DEC B      */ \
-	F(0x06, 8,  write_reg(B, read_n()))            /* LD B, n    */ \
+#define INSTR_TABLE(F)                                                       \
+	F(0x00, 4,  asm("nop"))                                                    \
+	F(0x01, 12, write_reg(BC, read_nn()))                     /* LD BC, nn */  \
+	F(0x02, 8,  write_reg(BC, read_reg(A)))                   /* LD (BC), A */ \
+	F(0x03, 8,  write_reg(BC, INCR(read_reg(BC))))            /* INC BC */     \
+	F(0x04, 4,  mem_t b_orig = read_reg(B);                   /* INC B */      \
+							write_reg(B, INCR(b_orig));                                    \
+							write_f(fZ, 1, EQUALS(read_reg(B), lift(0)));                  \
+							write_f(fN, 0, TRUE);                                          \
+							write_f(fH, 1, if_carry(3, b_orig, lift(1))))                  \
+	F(0x05, 4,  write_reg(B, DECR(read_reg(B))))              /* DEC B FIXME*/ \
+	F(0x06, 8,  write_reg(B, read_n()))                       /* LD B, n */    \
+	F(0x07, 8,  perror("Unimplemented."))          /* */                       \
+	F(0x08, 8,  perror("Unimplemented."))          /* */                       \
+	F(0x09, 8,  perror("Unimplemented."))          /* */                       \
 
 #define INSTR_FUNCS(OP, CYCLES, CMDS) void exec##OP() \
 	{ CMDS; set_lclock(CYCLES); }
 #define INSTR_FUNCNAMES(OP, CYCLES, CMDS)  exec##OP,
+#define EXEC_INSTR(instr) instructions[instr]()
 
 INSTR_TABLE(INSTR_FUNCS)
 void (*instructions[])() = { INSTR_TABLE(INSTR_FUNCNAMES) };
-
-#define EXEC_INSTR(instr) instructions[instr]()
 
 int step_cpu() {
 	char* instr = mem.read_byte(cpu->pc);
