@@ -219,25 +219,32 @@ int cpu_cleanup() {
 	return 0;
 }
 
-#define INSTR_TABLE(F)                                                       \
+void write_mem(mem_t addr, mem_t val) {
+	assert(addr.tid == BIT16);
+	assert(val.tid == BIT8);
+	perror("Implement me!");
+}
+
+#define INSTR_TABLE(F)                                                         \
 	F(0x00, 4, /* NOP */                                                       \
-			asm("nop"))                                                            \
+			asm("nop"))                                                        \
 	F(0x01, 12, /* LD BC, nn */                                                \
-			write_reg(BC, read_nn()))                                              \
+			write_reg(BC, read_nn()))                                          \
 	F(0x02, 8, /* LD (BC), A */                                                \
-			write_reg(BC, read_reg(A)))                                            \
+			write_reg(BC, read_reg(A)))                                        \
 	F(0x03, 8,  /* INC BC */                                                   \
-			write_reg(BC, INCR(read_reg(BC))))                                     \
+			write_reg(BC, INCR(read_reg(BC))))                                 \
 	F(0x04, 4, /* INC B */                                                     \
-			mem_t b_orig = read_reg(B);                                            \
-			write_reg(B, INCR(b_orig));                                            \
-			write_f(fZ, 1, EQUALS(read_reg(B), lift(0)));                          \
-			write_f(fN, 0, TRUE);                                                  \
-			write_f(fH, 1, if_carry(3, b_orig, lift(1))))                          \
+			mem_t b_orig = read_reg(B);                                        \
+			write_reg(B, INCR(b_orig));                                        \
+			write_f(fZ, 1, EQUALS(read_reg(B), lift(0)));                      \
+			write_f(fN, 0, TRUE);                                              \
+			write_f(fH, 1, if_carry(3, b_orig, lift(1))))                      \
 	F(0x05, 4,  write_reg(B, DECR(read_reg(B))))              /* DEC B FIXME*/ \
 	F(0x06, 8,  write_reg(B, read_n()))                       /* LD B, n */    \
 	F(0x07, 8,  perror("Unimplemented."))          /* */                       \
-	F(0x08, 8,  perror("Unimplemented."))          /* */                       \
+	F(0x08, 8, /* LD (nn), SP */                                               \
+			write_mem(read_nn(), read_reg(SP)))          /* */                 \
 	F(0x09, 8,  perror("Unimplemented."))          /* */                       \
 
 #define INSTR_FUNCS(OP, CYCLES, CMDS) void exec##OP() \
