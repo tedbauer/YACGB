@@ -230,27 +230,27 @@ void write_mem(mem_t addr, mem_t val) {
 	perror("Implement me!");
 }
 
-#define INSTR_TABLE(F)                                      \
-	F(0x00, /* NOP */                                       \
+#define INSTR_TABLE(F)                                                  \
+	F(0x00, /* NOP */                                               \
 			asm("nop");                                     \
 			set_lclock(4))                                  \
-	F(0x01, /* LD BC, nn */                                 \
+	F(0x01, /* LD BC, nn */                                         \
 			write_reg(BC, read_nn());                       \
 			set_lclock(12))                                 \
-	F(0x02, /* LD (BC), A */                                \
+	F(0x02, /* LD (BC), A */                                        \
 			write_reg(BC, read_reg(A));                     \
 			set_lclock(8))                                  \
-	F(0x03,  /* INC BC */                                   \
+	F(0x03,  /* INC BC */                                           \
 			write_reg(BC, INCR(read_reg(BC)));              \
 			set_lclock(8))                                  \
-	F(0x04, /* INC B */                                     \
+	F(0x04, /* INC B */                                             \
 			mem_t b_orig = read_reg(B);                     \
 			write_reg(B, INCR(b_orig));                     \
 			write_f(fZ, 1, EQUALS(read_reg(B), lift(0)));   \
 			write_f(fN, 0, TRUE);                           \
 			write_f(fH, 1, if_carry(3, b_orig, lift(1)));   \
 			set_lclock(8))                                  \
-	F(0x05, /* DEC B FIXME */                               \
+	F(0x05, /* DEC B FIXME */                                       \
 			mem_t b_orig = read_reg(B);                     \
 			mem_t result = DECR(b_orig);                    \
 			write_reg(B, result);                           \
@@ -258,14 +258,14 @@ void write_mem(mem_t addr, mem_t val) {
 			write_f(fN, 1, TRUE);                           \
 			write_f(fH, 1, !if_borrow(4, b_orig, lift(1))); \
 			set_lclock(4))                                  \
-	F(0x06, /* LD B, n */                                   \
+	F(0x06, /* LD B, n */                                           \
 			write_reg(B, read_n());                         \
 			set_lclock(8))                                  \
-	F(0x07, perror("Unimplemented."))                       \
-	F(0x08, /* LD (nn), SP */                               \
+	F(0x07, perror("Unimplemented."))                               \
+	F(0x08, /* LD (nn), SP */                                       \
 			write_mem(read_nn(), read_reg(SP));             \
 			set_lclock(8))                                  \
-	F(0x09, perror("Unimplemented."))                       \
+	F(0x09, perror("Unimplemented."))                               \
 
 #define INSTR_FUNCS(OP, CMDS) void exec##OP() { CMDS; }
 #define INSTR_FUNCNAMES(OP, CMDS)  exec##OP,
