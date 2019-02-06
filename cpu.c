@@ -177,6 +177,11 @@ unsigned int if_carry(int bit, mem_t val1, mem_t val2) {
 	return 0;
 }
 
+unsigned int if_borrow(int bit, mem_t val1, mem_t val2) {
+	perror("Implement me!");
+	return 0;
+}
+
 #define ADD(val1, val2)    binop(sum, val1, val2)
 #define SUB(val1, val2)    binop(sub, val1, val2)
 #define INCR(val)          binop(add, val, lift(1))
@@ -200,7 +205,7 @@ mem_t read_nn() {
 
 mem_t read_n() {
 	mem_t result;
-	result.bit8 = mem.read_byte(pc+1);
+	//result.bit8; = mem.read_byte(pc+1);
 	return result;
 }
 
@@ -225,37 +230,52 @@ void write_mem(mem_t addr, mem_t val) {
 	perror("Implement me!");
 }
 
-#define INSTR_TABLE(F)                                                         \
-	F(0x00, 4, /* NOP */                                                       \
-			asm("nop"))                                                        \
-	F(0x01, 12, /* LD BC, nn */                                                \
-			write_reg(BC, read_nn()))                                          \
-	F(0x02, 8, /* LD (BC), A */                                                \
-			write_reg(BC, read_reg(A)))                                        \
-	F(0x03, 8,  /* INC BC */                                                   \
-			write_reg(BC, INCR(read_reg(BC))))                                 \
-	F(0x04, 4, /* INC B */                                                     \
-			mem_t b_orig = read_reg(B);                                        \
-			write_reg(B, INCR(b_orig));                                        \
-			write_f(fZ, 1, EQUALS(read_reg(B), lift(0)));                      \
-			write_f(fN, 0, TRUE);                                              \
-			write_f(fH, 1, if_carry(3, b_orig, lift(1))))                      \
-	F(0x05, 4,  write_reg(B, DECR(read_reg(B))))              /* DEC B FIXME*/ \
-	F(0x06, 8,  write_reg(B, read_n()))                       /* LD B, n */    \
-	F(0x07, 8,  perror("Unimplemented."))          /* */                       \
-	F(0x08, 8, /* LD (nn), SP */                                               \
-			write_mem(read_nn(), read_reg(SP)))          /* */                 \
-	F(0x09, 8,  perror("Unimplemented."))          /* */                       \
+#define INSTR_TABLE(F)                                      \
+	F(0x00, /* NOP */                                       \
+			asm("nop");                                     \
+			set_lclock(4))                                  \
+	F(0x01, /* LD BC, nn */                                 \
+			write_reg(BC, read_nn());                       \
+			set_lclock(12))                                 \
+	F(0x02, /* LD (BC), A */                                \
+			write_reg(BC, read_reg(A));                     \
+			set_lclock(8))                                  \
+	F(0x03,  /* INC BC */                                   \
+			write_reg(BC, INCR(read_reg(BC)));              \
+			set_lclock(8))                                  \
+	F(0x04, /* INC B */                                     \
+			mem_t b_orig = read_reg(B);                     \
+			write_reg(B, INCR(b_orig));                     \
+			write_f(fZ, 1, EQUALS(read_reg(B), lift(0)));   \
+			write_f(fN, 0, TRUE);                           \
+			write_f(fH, 1, if_carry(3, b_orig, lift(1)));   \
+			set_lclock(8))                                  \
+	F(0x05, /* DEC B FIXME */                               \
+			mem_t b_orig = read_reg(B);                     \
+			mem_t result = DECR(b_orig);                    \
+			write_reg(B, result);                           \
+			write_f(fZ, 1, EQUALS(result, lift(0)));        \
+			write_f(fN, 1, TRUE);                           \
+			write_f(fH, 1, !if_borrow(4, b_orig, lift(1))); \
+			set_lclock(4))                                  \
+	F(0x06, /* LD B, n */                                   \
+			write_reg(B, read_n());                         \
+			set_lclock(8))                                  \
+	F(0x07, perror("Unimplemented."))                       \
+	F(0x08, /* LD (nn), SP */                               \
+			write_mem(read_nn(), read_reg(SP));             \
+			set_lclock(8))                                  \
+	F(0x09, perror("Unimplemented."))                       \
 
-#define INSTR_FUNCS(OP, CYCLES, CMDS) void exec##OP() \
-	{ CMDS; set_lclock(CYCLES); }
-#define INSTR_FUNCNAMES(OP, CYCLES, CMDS)  exec##OP,
+#define INSTR_FUNCS(OP, CMDS) void exec##OP() { CMDS; }
+#define INSTR_FUNCNAMES(OP, CMDS)  exec##OP,
 #define EXEC_INSTR(instr) instructions[instr]()
 
 INSTR_TABLE(INSTR_FUNCS)
 void (*instructions[])() = { INSTR_TABLE(INSTR_FUNCNAMES) };
 
 int step_cpu() {
-	char* instr = mem.read_byte(cpu->pc);
+	char* instr;// = mem.read_byte(cpu->pc);
 	EXEC_INSTR((uint8_t)instr);
+	return 0;
 }
