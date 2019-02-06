@@ -220,15 +220,20 @@ int cpu_cleanup() {
 }
 
 #define INSTR_TABLE(F)                                                       \
-	F(0x00, 4,  asm("nop"))                                                    \
-	F(0x01, 12, write_reg(BC, read_nn()))                     /* LD BC, nn */  \
-	F(0x02, 8,  write_reg(BC, read_reg(A)))                   /* LD (BC), A */ \
-	F(0x03, 8,  write_reg(BC, INCR(read_reg(BC))))            /* INC BC */     \
-	F(0x04, 4,  mem_t b_orig = read_reg(B);                   /* INC B */      \
-							write_reg(B, INCR(b_orig));                                    \
-							write_f(fZ, 1, EQUALS(read_reg(B), lift(0)));                  \
-							write_f(fN, 0, TRUE);                                          \
-							write_f(fH, 1, if_carry(3, b_orig, lift(1))))                  \
+	F(0x00, 4, /* NOP */                                                       \
+			asm("nop"))                                                            \
+	F(0x01, 12, /* LD BC, nn */                                                \
+			write_reg(BC, read_nn()))                                              \
+	F(0x02, 8, /* LD (BC), A */                                                \
+			write_reg(BC, read_reg(A)))                                            \
+	F(0x03, 8,  /* INC BC */                                                   \
+			write_reg(BC, INCR(read_reg(BC))))                                     \
+	F(0x04, 4, /* INC B */                                                     \
+			mem_t b_orig = read_reg(B);                                            \
+			write_reg(B, INCR(b_orig));                                            \
+			write_f(fZ, 1, EQUALS(read_reg(B), lift(0)));                          \
+			write_f(fN, 0, TRUE);                                                  \
+			write_f(fH, 1, if_carry(3, b_orig, lift(1))))                          \
 	F(0x05, 4,  write_reg(B, DECR(read_reg(B))))              /* DEC B FIXME*/ \
 	F(0x06, 8,  write_reg(B, read_n()))                       /* LD B, n */    \
 	F(0x07, 8,  perror("Unimplemented."))          /* */                       \
