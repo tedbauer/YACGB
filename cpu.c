@@ -10,11 +10,11 @@
 
 typedef enum {
 	/* 16 bit registers: */
-	PC=0, SP=2,
+	PC=0, SP=1,
 
 	/* 8 bit registers: */
-	A=4, B=5, C=6, D=7, E=8,
-	F=9, H=10, L=11,
+	A=2, B=3, C=4, D=5, E=6,
+	F=7, H=8, L=9,
 
 	/* Paired registers: */
 	AF, BC, DE, HL
@@ -28,183 +28,83 @@ typedef enum {
 } flag_t;
 
 typedef struct {
-	uint8_t registers[12];
+	uint8_t registers[10];
 	unsigned int lc;
 } cpu_state_t;
 
 cpu_state_t* cpu;
 mem_state_t* mem;
 
-typedef enum {
-	BIT8,
-	BIT16
-} mem_t_id;
-
-typedef union {
-	uint8_t bit8;
-	uint16_t bit16;
-	mem_t_id tid;
-} mem_t;
-
 /* Place contents of new_val in register r. */
-void write_reg(reg_t r, mem_t new_val) {
-	switch(r) {
-		case PC:
-		case SP:
-			cpu->registers[r] = new_val.bit16; break;
-		case AF:
-			cpu->registers[A] = new_val.bit16; break;
-		case BC:
-			cpu->registers[B] = new_val.bit16; break;
-		case DE:
-			cpu->registers[D] = new_val.bit16; break;
-		case HL:
-			cpu->registers[H] = new_val.bit16; break;
-		case A:
-		case B:
-		case C:
-		case D:
-		case E:
-		case F:
-		case H:
-		case L:
-			cpu->registers[r] = new_val.bit8; break;
-		default:
-			perror("Write_reg call failed.");
-	}
-}
-
-/* FIXME i think getting the 16bit vals is wrong */
-mem_t read_preg(reg_t r) {
-	mem_t result;
+void write_reg(reg_t r, int new_val) {
 	switch(r) {
 		case AF:
-			result.bit16 = cpu->registers[A];
-			break;
+			write_reg(A, new_val & 0xFF);
+			write_reg(F, new_val & 0xFF00);
 		case BC:
-			result.bit16 = cpu->registers[B];
-			break;
+			write_reg(B, new_val & 0xFF);
+			write_reg(C, new_val & 0xFF00);
 		case DE:
-			result.bit16 = cpu->registers[D];
-			break;
+			write_reg(D, new_val & 0xFF);
+			write_reg(E, new_val & 0xFF00);
 		case HL:
-			result.bit16 = cpu->registers[H];
-			break;
+			write_reg(H, new_val & 0xFF);
+			write_reg(H, new_val & 0xFF00);
 		default:
-			perror("Non-pair supplied to read_preg.");
+			cpu->registers[r] = new_val;
 	}
-	return result;
 }
 
-/* FIXME i think getting the 16bit vals is wrong */
-mem_t read_reg(reg_t r) {
-	mem_t result;
+int read_reg(reg_t r) {
+	int result = 0;
 	switch(r) {
-		case PC:
-			result.bit16 = cpu->registers[r];
-			break;
-		case SP:
-			result.bit16 = cpu->registers[r];
-			break;
 		case AF:
+			result |= read_reg(A);
+			result |= (read_reg(F) << 8);
 		case BC:
+			result |= read_reg(B);
+			result |= (read_reg(C) << 8);
 		case DE:
+			result |= read_reg(D);
+			result |= (read_reg(E) << 8);
 		case HL:
-			return read_preg(r);
+			result |= read_reg(H);
+			result |= (read_reg(L) << 8);
 		default:
-			result.bit8 = cpu->registers[r];
-	}
-
-	return result;
-}
-
-mem_t lift(unsigned int val) {
-	assert(val > 0);
-	assert(val < 655356);
-	mem_t result;
-	if (val > 255) {
-		result.bit16 = (uint16_t) val;
-		result.tid   = BIT16;
-	} else {
-		result.bit8 = (uint8_t) val;
-		result.tid  = BIT8;
+			return cpu->registers[r];
 	}
 	return result;
 }
 
-unsigned int add(unsigned int val1, unsigned int val2) { return val1 + val2; }
-unsigned int sub(unsigned int val1, unsigned int val2) { return val1 - val2; }
-unsigned int xor(unsigned int val1, unsigned int val2) { return val1 ^ val2; }
-unsigned int or(unsigned int val1, unsigned int val2)  { return val1 | val2; }
-unsigned int lshift(unsigned int val1, unsigned int val2)  { return val1 << val2; }
-
-unsigned int eq(unsigned int val1, unsigned int val2)  { return val1 == val2; }
-
-/* Instead of "demoting", grab bottom bits? */
-mem_t binop(unsigned int (*op)(unsigned int, unsigned int), mem_t val1, mem_t val2) {
-	mem_t result;
-	if (val1.tid == BIT8 && val2.tid == BIT8) {
-		result.bit8 = (uint8_t) op((unsigned int)val1.bit8, (unsigned int)val2.bit8);
-		result.tid  = BIT8;
-	} else if (val1.tid == BIT8 && val2.tid == BIT16) {
-		result.bit16 = (uint8_t) op((unsigned int)val1.bit8, (unsigned int)val2.bit16);
-		result.tid  = BIT16;
-	} else if (val1.tid == BIT16 && val2.tid == BIT8) {
-		result.bit16 = (uint8_t) op((unsigned int)val1.bit16, (unsigned int)val2.bit8);
-		result.tid  = BIT16;
-	} else {
-		result.bit16 = (uint8_t) op((unsigned int)val1.bit16, (unsigned int)val2.bit16);
-		result.tid  = BIT16;
-	}
-	return result;
+int if_carry(int bit, int val1, int val2) {
+	return (val1 & (1 << bit)) + (val2 & (1 << bit));
 }
 
-/* Instead of "demoting", grab bottom bits? */
-unsigned int bool_op(unsigned int (*op)(unsigned int, unsigned int), mem_t val1, mem_t val2) {
-	if (val1.tid == BIT8 && val2.tid == BIT8) {
-		return op((unsigned int)val1.bit8, (unsigned int)val2.bit8);
-	} else if (val1.tid == BIT8 && val2.tid == BIT16) {
-		return op((unsigned int)val1.bit8, (unsigned int)val2.bit16);
-	} else if (val1.tid == BIT16 && val2.tid == BIT8) {
-		return op((unsigned int)val1.bit16, (unsigned int)val2.bit8);
-	} else {
-		return op((unsigned int)val1.bit16, (unsigned int)val2.bit16);
-	}
-}
-
-unsigned int if_carry(int bit, mem_t val1, mem_t val2) {
+int if_borrow(int bit, int val1, int val2) {
 	perror("Implement me!");
 	return 0;
 }
 
-unsigned int if_borrow(int bit, mem_t val1, mem_t val2) {
-	perror("Implement me!");
-	return 0;
+/* FIXME: check; idk if I did this right */
+int lrotate(int val, int bound) {
+	return (val << 1) | (val & (1 << bound));
 }
 
-#define ADD(val1, val2)    binop(sum, val1, val2)
-#define SUB(val1, val2)    binop(sub, val1, val2)
-#define INCR(val)          binop(add, val, lift(1))
-#define DECR(val)          binop(add, val, lift(-1))
-#define XOR(val1, val2)    binop(xor, val1, val2)
-#define OR(val1, val2)     binop(or, val1, val2)
-#define LSHIFT(val1, val2) binop(lshift, val1, val2)
-#define EQUALS(val1, val2) bool_op(eq, val1, val2)
 
 void write_f(flag_t f, int val, int guard) {
 	if (guard) {
-		write_reg(F, OR(read_reg(F), LSHIFT(lift(1), SUB(lift(4), lift(f)))));
+		write_reg(F, read_reg(F) | (1 << (4 - f)));
 	}
 }
 
-mem_t read_nn() {
+int read_nn() {
 	perror("Implement me!");
-	mem_t bad;
+	int bad;
 	return bad;
 }
 
-mem_t read_n() {
-	mem_t result;
+int read_n() {
+	int result;
 	//result.bit8; = mem.read_byte(pc+1);
 	return result;
 }
@@ -224,48 +124,265 @@ int cpu_cleanup() {
 	return 0;
 }
 
-void write_mem(mem_t addr, mem_t val) {
-	assert(addr.tid == BIT16);
-	assert(val.tid == BIT8);
+void write_mem(int addr, int val) {
 	perror("Implement me!");
 }
 
-#define INSTR_TABLE(F)                                                  \
-	F(0x00, /* NOP */                                               \
-			asm("nop");                                     \
-			set_lclock(4))                                  \
-	F(0x01, /* LD BC, nn */                                         \
-			write_reg(BC, read_nn());                       \
-			set_lclock(12))                                 \
-	F(0x02, /* LD (BC), A */                                        \
-			write_reg(BC, read_reg(A));                     \
-			set_lclock(8))                                  \
-	F(0x03,  /* INC BC */                                           \
-			write_reg(BC, INCR(read_reg(BC)));              \
-			set_lclock(8))                                  \
-	F(0x04, /* INC B */                                             \
-			mem_t b_orig = read_reg(B);                     \
-			write_reg(B, INCR(b_orig));                     \
-			write_f(fZ, 1, EQUALS(read_reg(B), lift(0)));   \
-			write_f(fN, 0, TRUE);                           \
-			write_f(fH, 1, if_carry(3, b_orig, lift(1)));   \
-			set_lclock(8))                                  \
-	F(0x05, /* DEC B FIXME */                                       \
-			mem_t b_orig = read_reg(B);                     \
-			mem_t result = DECR(b_orig);                    \
-			write_reg(B, result);                           \
-			write_f(fZ, 1, EQUALS(result, lift(0)));        \
-			write_f(fN, 1, TRUE);                           \
-			write_f(fH, 1, !if_borrow(4, b_orig, lift(1))); \
-			set_lclock(4))                                  \
-	F(0x06, /* LD B, n */                                           \
-			write_reg(B, read_n());                         \
-			set_lclock(8))                                  \
-	F(0x07, perror("Unimplemented."))                               \
-	F(0x08, /* LD (nn), SP */                                       \
-			write_mem(read_nn(), read_reg(SP));             \
-			set_lclock(8))                                  \
-	F(0x09, perror("Unimplemented."))                               \
+#define INSTR_TABLE(F)                                            \
+	F(0x00, /* NOP */                                         \
+			asm("nop");                               \
+			set_lclock(4))                            \
+	F(0x01, /* LD BC, nn */                                   \
+			write_reg(BC, read_nn());                 \
+			set_lclock(12))                           \
+	F(0x02, /* LD (BC), A */                                  \
+			write_reg(BC, read_reg(A));               \
+			set_lclock(8))                            \
+	F(0x03,  /* INC BC */                                     \
+			write_reg(BC, read_reg(BC)+1);            \
+			set_lclock(8))                            \
+	F(0x04, /* INC B */                                       \
+			int b_orig = read_reg(B);                 \
+			int result = b_orig+1;                    \
+			write_reg(B, result);                     \
+			write_f(fZ, 1, read_reg(B) == 0);         \
+			write_f(fN, 0, TRUE);                     \
+			write_f(fH, 1, if_carry(3, b_orig, 1));   \
+			set_lclock(8))                            \
+	F(0x05, /* DEC B FIXME */                                 \
+			int b_orig = read_reg(B);                 \
+			int result = b_orig-1;                    \
+			write_reg(B, result);                     \
+			write_f(fZ, 1, result == 0);              \
+			write_f(fN, 1, TRUE);                     \
+			write_f(fH, 1, !if_borrow(4, b_orig, 1)); \
+			set_lclock(4))                            \
+	F(0x06, /* LD B, n */                                     \
+			write_reg(B, read_n());                   \
+			set_lclock(8))                            \
+	F(0x07, /* RLC A */                                       \
+			int a_orig = read_reg(A);                 \
+			int result = lrotate(a_orig, 7);          \
+			write_reg(A, result);                     \
+			write_f(fC, a_orig & (1 << 7), TRUE);     \
+			write_f(fZ, 1, result == 0);              \
+			write_f(fN, 0, TRUE);                     \
+			write_f(fH, 0, TRUE))                     \
+	F(0x08, /* LD (nn), SP */                                 \
+			write_mem(read_nn(), read_reg(SP));       \
+			set_lclock(8))                            \
+	F(0x09, perror("Unimplemented."))                         \
+	F(0x0a, perror("Unimplemented."))                         \
+	F(0x0b, perror("Unimplemented."))                         \
+	F(0x0c, perror("Unimplemented."))                         \
+	F(0x0d, perror("Unimplemented."))                         \
+	F(0x0e, perror("Unimplemented."))                         \
+	F(0x0f, perror("Unimplemented."))                         \
+	F(0x10, perror("Unimplemented."))                         \
+	F(0x11, perror("Unimplemented."))                         \
+	F(0x12, perror("Unimplemented."))                         \
+	F(0x13, perror("Unimplemented."))                         \
+	F(0x14, perror("Unimplemented."))                         \
+	F(0x15, perror("Unimplemented."))                         \
+	F(0x16, perror("Unimplemented."))                         \
+	F(0x17, perror("Unimplemented."))                         \
+	F(0x18, perror("Unimplemented."))                         \
+	F(0x19, perror("Unimplemented."))                         \
+	F(0x1a, perror("Unimplemented."))                         \
+	F(0x1b, perror("Unimplemented."))                         \
+	F(0x1c, perror("Unimplemented."))                         \
+	F(0x1d, perror("Unimplemented."))                         \
+	F(0x1e, perror("Unimplemented."))                         \
+	F(0x1f, perror("Unimplemented."))                         \
+	F(0x20, perror("Unimplemented."))                         \
+	F(0x21, /* LD HL, nn */                                   \
+			write_reg(HL, read_nn());                 \
+			set_lclock(12))                           \
+	F(0x22, perror("Unimplemented."))                         \
+	F(0x23, perror("Unimplemented."))                         \
+	F(0x24, perror("Unimplemented."))                         \
+	F(0x25, perror("Unimplemented."))                         \
+	F(0x26, perror("Unimplemented."))                         \
+	F(0x27, perror("Unimplemented."))                         \
+	F(0x28, perror("Unimplemented."))                         \
+	F(0x29, perror("Unimplemented."))                         \
+	F(0x2a, perror("Unimplemented."))                         \
+	F(0x2b, perror("Unimplemented."))                         \
+	F(0x2c, perror("Unimplemented."))                         \
+	F(0x2d, perror("Unimplemented."))                         \
+	F(0x2e, perror("Unimplemented."))                         \
+	F(0x2f, perror("Unimplemented."))                         \
+	F(0x30, perror("Unimplemented."))                         \
+	F(0x31, /* LD SP, nn */                                   \
+			write_reg(SP, read_nn()))                 \
+	F(0x32, perror("Unimplemented."))                         \
+	F(0x33, perror("Unimplemented."))                         \
+	F(0x34, perror("Unimplemented."))                         \
+	F(0x35, perror("Unimplemented."))                         \
+	F(0x36, perror("Unimplemented."))                         \
+	F(0x37, perror("Unimplemented."))                         \
+	F(0x38, perror("Unimplemented."))                         \
+	F(0x39, perror("Unimplemented."))                         \
+	F(0x3a, perror("Unimplemented."))                         \
+	F(0x3b, perror("Unimplemented."))                         \
+	F(0x3c, perror("Unimplemented."))                         \
+	F(0x3d, perror("Unimplemented."))                         \
+	F(0x3e, perror("Unimplemented."))                         \
+	F(0x3f, perror("Unimplemented."))                         \
+	F(0x40, perror("Unimplemented."))                         \
+	F(0x41, perror("Unimplemented."))                         \
+	F(0x42, perror("Unimplemented."))                         \
+	F(0x43, perror("Unimplemented."))                         \
+	F(0x44, perror("Unimplemented."))                         \
+	F(0x45, perror("Unimplemented."))                         \
+	F(0x46, perror("Unimplemented."))                         \
+	F(0x47, perror("Unimplemented."))                         \
+	F(0x48, perror("Unimplemented."))                         \
+	F(0x49, perror("Unimplemented."))                         \
+	F(0x4a, perror("Unimplemented."))                         \
+	F(0x4b, perror("Unimplemented."))                         \
+	F(0x4c, perror("Unimplemented."))                         \
+	F(0x4d, perror("Unimplemented."))                         \
+	F(0x4e, perror("Unimplemented."))                         \
+	F(0x4f, perror("Unimplemented."))                         \
+	F(0x50, perror("Unimplemented."))                         \
+	F(0x51, perror("Unimplemented."))                         \
+	F(0x52, perror("Unimplemented."))                         \
+	F(0x53, perror("Unimplemented."))                         \
+	F(0x54, perror("Unimplemented."))                         \
+	F(0x55, perror("Unimplemented."))                         \
+	F(0x56, perror("Unimplemented."))                         \
+	F(0x57, perror("Unimplemented."))                         \
+	F(0x58, perror("Unimplemented."))                         \
+	F(0x59, perror("Unimplemented."))                         \
+	F(0x5a, perror("Unimplemented."))                         \
+	F(0x5b, perror("Unimplemented."))                         \
+	F(0x5c, perror("Unimplemented."))                         \
+	F(0x5d, perror("Unimplemented."))                         \
+	F(0x5e, perror("Unimplemented."))                         \
+	F(0x5f, perror("Unimplemented."))                         \
+	F(0x60, perror("Unimplemented."))                         \
+	F(0x61, perror("Unimplemented."))                         \
+	F(0x62, perror("Unimplemented."))                         \
+	F(0x63, perror("Unimplemented."))                         \
+	F(0x64, perror("Unimplemented."))                         \
+	F(0x65, perror("Unimplemented."))                         \
+	F(0x66, perror("Unimplemented."))                         \
+	F(0x67, perror("Unimplemented."))                         \
+	F(0x68, perror("Unimplemented."))                         \
+	F(0x69, perror("Unimplemented."))                         \
+	F(0x6a, perror("Unimplemented."))                         \
+	F(0x6b, perror("Unimplemented."))                         \
+	F(0x6c, perror("Unimplemented."))                         \
+	F(0x6d, perror("Unimplemented."))                         \
+	F(0x6e, perror("Unimplemented."))                         \
+	F(0x6f, perror("Unimplemented."))                         \
+	F(0x70, perror("Unimplemented."))                         \
+	F(0x71, perror("Unimplemented."))                         \
+	F(0x72, perror("Unimplemented."))                         \
+	F(0x73, perror("Unimplemented."))                         \
+	F(0x74, perror("Unimplemented."))                         \
+	F(0x75, perror("Unimplemented."))                         \
+	F(0x76, perror("Unimplemented."))                         \
+	F(0x77, perror("Unimplemented."))                         \
+	F(0x78, perror("Unimplemented."))                         \
+	F(0x79, perror("Unimplemented."))                         \
+	F(0x7a, perror("Unimplemented."))                         \
+	F(0x7b, perror("Unimplemented."))                         \
+	F(0x7c, perror("Unimplemented."))                         \
+	F(0x7d, perror("Unimplemented."))                         \
+	F(0x7e, perror("Unimplemented."))                         \
+	F(0x7f, perror("Unimplemented."))                         \
+	F(0x80, perror("Unimplemented."))                         \
+	F(0x81, perror("Unimplemented."))                         \
+	F(0x82, perror("Unimplemented."))                         \
+	F(0x83, perror("Unimplemented."))                         \
+	F(0x84, perror("Unimplemented."))                         \
+	F(0x85, perror("Unimplemented."))                         \
+	F(0x86, perror("Unimplemented."))                         \
+	F(0x87, perror("Unimplemented."))                         \
+	F(0x88, perror("Unimplemented."))                         \
+	F(0x89, perror("Unimplemented."))                         \
+	F(0x8a, perror("Unimplemented."))                         \
+	F(0x8b, perror("Unimplemented."))                         \
+	F(0x8c, perror("Unimplemented."))                         \
+	F(0x8d, perror("Unimplemented."))                         \
+	F(0x8e, perror("Unimplemented."))                         \
+	F(0x8f, perror("Unimplemented."))                         \
+	F(0x90, perror("Unimplemented."))                         \
+	F(0x91, perror("Unimplemented."))                         \
+	F(0x92, perror("Unimplemented."))                         \
+	F(0x93, perror("Unimplemented."))                         \
+	F(0x94, perror("Unimplemented."))                         \
+	F(0x95, perror("Unimplemented."))                         \
+	F(0x96, perror("Unimplemented."))                         \
+	F(0x97, perror("Unimplemented."))                         \
+	F(0x98, perror("Unimplemented."))                         \
+	F(0x99, perror("Unimplemented."))                         \
+	F(0x9a, perror("Unimplemented."))                         \
+	F(0x9b, perror("Unimplemented."))                         \
+	F(0x9c, perror("Unimplemented."))                         \
+	F(0x9d, perror("Unimplemented."))                         \
+	F(0x9e, perror("Unimplemented."))                         \
+	F(0x9f, perror("Unimplemented."))                         \
+	F(0xa0, perror("Unimplemented."))                         \
+	F(0xa1, perror("Unimplemented."))                         \
+	F(0xa2, perror("Unimplemented."))                         \
+	F(0xa3, perror("Unimplemented."))                         \
+	F(0xa4, perror("Unimplemented."))                         \
+	F(0xa5, perror("Unimplemented."))                         \
+	F(0xa6, perror("Unimplemented."))                         \
+	F(0xa7, perror("Unimplemented."))                         \
+	F(0xa8, perror("Unimplemented."))                         \
+	F(0xa9, perror("Unimplemented."))                         \
+	F(0xaa, perror("Unimplemented."))                         \
+	F(0xab, perror("Unimplemented."))                         \
+	F(0xac, perror("Unimplemented."))                         \
+	F(0xad, perror("Unimplemented."))                         \
+	F(0xae, perror("Unimplemented."))                         \
+	F(0xaf, /* XOR A */                                       \
+			int result = read_reg(A) ^ read_reg(A);   \
+			write_reg(A, result);                     \
+			write_f(fZ, 1, result == 0);              \
+			write_f(fN, 0, TRUE);                     \
+			write_f(fH, 0, TRUE);                     \
+			write_f(fC, 0, TRUE);                     \
+			set_lclock(4))                            \
+	F(0xb0, perror("Unimplemented."))                         \
+	F(0xb1, perror("Unimplemented."))                         \
+	F(0xb2, perror("Unimplemented."))                         \
+	F(0xb3, perror("Unimplemented."))                         \
+	F(0xb4, perror("Unimplemented."))                         \
+	F(0xb5, perror("Unimplemented."))                         \
+	F(0xb6, perror("Unimplemented."))                         \
+	F(0xb7, perror("Unimplemented."))                         \
+	F(0xb8, perror("Unimplemented."))                         \
+	F(0xb9, perror("Unimplemented."))                         \
+	F(0xba, perror("Unimplemented."))                         \
+	F(0xbb, perror("Unimplemented."))                         \
+	F(0xbc, perror("Unimplemented."))                         \
+	F(0xbd, perror("Unimplemented."))                         \
+	F(0xbe, perror("Unimplemented."))                         \
+	F(0xbf, perror("Unimplemented."))                         \
+	F(0xc0, perror("Unimplemented."))                         \
+	F(0xc1, perror("Unimplemented."))                         \
+	F(0xc2, perror("Unimplemented."))                         \
+	F(0xc3, perror("Unimplemented."))                         \
+	F(0xc4, perror("Unimplemented."))                         \
+	F(0xc5, perror("Unimplemented."))                         \
+	F(0xc6, perror("Unimplemented."))                         \
+	F(0xc7, perror("Unimplemented."))                         \
+	F(0xc8, perror("Unimplemented."))                         \
+	F(0xc9, perror("Unimplemented."))                         \
+	F(0xca, perror("Unimplemented."))                         \
+	F(0xcb, perror("Unimplemented."))                         \
+	F(0xcc, perror("Unimplemented."))                         \
+	F(0xcd, perror("Unimplemented."))                         \
+	F(0xce, perror("Unimplemented."))                         \
+	F(0xcf, perror("Unimplemented."))                         \
+	F(0xd0, perror("Unimplemented."))                         \
+	F(0xd1, perror("Unimplemented."))                         \
+	F(0xd2, perror("Unimplemented."))
 
 #define INSTR_FUNCS(OP, CMDS) void exec##OP() { CMDS; }
 #define INSTR_FUNCNAMES(OP, CMDS)  exec##OP,
