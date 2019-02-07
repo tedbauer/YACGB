@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 char *bootstrap_rom = " \
 	31feffaf21ff9f32cb7c20fb2126ff0e113e8032e20c3ef3e2323e77773e \
 	fce0471104012110801acd9500cd9600137bfe3420f311d80006081a1322 \
@@ -10,9 +12,6 @@ char *bootstrap_rom = " \
 	f506197886230520fb8620fe3e01e050";
 
 int main() {
-
-
-
-
-
+	printf("Hello!\n");
+	return 0;
 }
