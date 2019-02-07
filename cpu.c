@@ -128,6 +128,9 @@ void write_mem(int addr, int val) {
 	perror("Implement me!");
 }
 
+#define TRUE  1
+#define FALSE 0
+
 #define INSTR_TABLE(F)                                            \
 	F(0x00, /* NOP */                                         \
 			asm("nop");                               \
@@ -391,8 +394,4 @@ void write_mem(int addr, int val) {
 INSTR_TABLE(INSTR_FUNCS)
 void (*instructions[])() = { INSTR_TABLE(INSTR_FUNCNAMES) };
 
-int step_cpu() {
-	char* instr;// = mem.read_byte(cpu->pc);
-	EXEC_INSTR((uint8_t)instr);
-	return 0;
-}
+#define EXEC_INSTR(instr) instructions[instr]()
