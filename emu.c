@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "cpu.h"
+#include "mem.h"
 
 char *bootstrap_rom = " \
 	31feffaf21ff9f32cb7c20fb2126ff0e113e8032e20c3ef3e2323e77773e \
@@ -12,6 +14,10 @@ char *bootstrap_rom = " \
 	f506197886230520fb8620fe3e01e050";
 
 int main() {
-	printf("Hello!\n");
+	mem_state_t* mem = init_mem();
+	init_cpu(mem);
+	while (1) {
+		step_cpu();
+	}
 	return 0;
 }

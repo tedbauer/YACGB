@@ -15,11 +15,11 @@ typedef struct {
 	int z_ram[128];
 } mem_state_t;
 
-mem_state_t* mem_init() {
+mem_state_t* init_mem() {
 	return malloc(sizeof(mem_state_t));
 }
 
-void mem_cleanup(mem_state_t* mem) {
+void cleanup_mem(mem_state_t* mem) {
 	free(mem);
 }
 
@@ -48,8 +48,6 @@ int read_byte(mem_state_t* mem, int addr) {
 		return mem->gpu_vram[addr - 0x8000];
 	}
 
-
-
-
 }
+
 char* write_byte(mem_state_t* mem, uint8_t addr, uint8_t val);

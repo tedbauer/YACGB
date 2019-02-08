@@ -116,6 +116,7 @@ void set_lclock(int lclock) {
 int cpu_init(mem_state_t* new_mem) {
 	mem = new_mem;
 	cpu  = malloc(sizeof(cpu_state_t)); /* FIXME: can you do this? */
+	write_reg(SP, 0x0000);
 	return 0;
 }
 
@@ -395,3 +396,10 @@ INSTR_TABLE(INSTR_FUNCS)
 void (*instructions[])() = { INSTR_TABLE(INSTR_FUNCNAMES) };
 
 #define EXEC_INSTR(instr) instructions[instr]()
+
+void step_cpu() {
+	int pc = read_reg(PC);
+	char* instr = read_byte(mem, pc);
+	EXEC_INSTR((int)instr);
+	write_reg(PC, pc+1);
+}

@@ -1,5 +1,6 @@
+#include "mem.h"
 typedef cpu_state;
 
-cpu_state* init_cpu(memory);
+int init_cpu(mem_state_t* memory);
 
-int run_command(cpu_state*, op_code);
+void step_cpu();
