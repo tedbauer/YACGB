@@ -1,6 +1,6 @@
-# YACGB
+# Yacgb
 
-Yet another C GB emulator
+Yet another C GB emulator!
 
 ## Building
 
@@ -11,9 +11,9 @@ Yet another C GB emulator
 ## Tasks
 - [ ] CPU
 	- [ ] BIOS instructions
-	- [ ] GB Bootstrap ROM instructions
 	- [ ] The rest!
 - [ ] Memory
+- [ ] ROM parser
 - [ ] Graphics subsystem
 - [ ] Other stuff
 
