@@ -113,7 +113,7 @@ void set_lclock(int lclock) {
 	cpu->lc = lclock;
 }
 
-int cpu_init(mem_state_t* new_mem) {
+int init_cpu(mem_state_t* new_mem) {
 	mem = new_mem;
 	cpu  = malloc(sizeof(cpu_state_t)); /* FIXME: can you do this? */
 	write_reg(SP, 0x0000);
@@ -400,6 +400,7 @@ void (*instructions[])() = { INSTR_TABLE(INSTR_FUNCNAMES) };
 void step_cpu() {
 	int pc = read_reg(PC);
 	char* instr = read_byte(mem, pc);
+	printf("Executing instruction %d. PC is %d. \n", (int)instr, pc);
 	EXEC_INSTR((int)instr);
 	write_reg(PC, pc+1);
 }
