@@ -1,3 +1,5 @@
+.PHONY: all run
+
 CC = gcc
 CFLAGS = -g -Wall
 
