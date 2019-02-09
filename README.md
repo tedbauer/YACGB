@@ -2,6 +2,12 @@
 
 Yet another C GB emulator
 
+## Building
+
+- `make`: Build & run
+- `make emu`: Create binary executable `emu`
+- `make clean`: Clean up build stuff
+
 ## Tasks
 - [ ] CPU
 	- [ ] BIOS instructions

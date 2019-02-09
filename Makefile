@@ -1,7 +1,10 @@
 CC = gcc
 CFLAGS = -g -Wall
 
-all: emu
+all: run
+
+run: emu
+	./emu
 
 emu: emu.o cpu.o mem.o
 	$(CC) $(CFLAGS) -o emu emu.o cpu.o mem.o
