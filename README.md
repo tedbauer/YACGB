@@ -8,7 +8,7 @@ Yet another C GB emulator
 	- [ ] GB Bootstrap ROM instructions
 	- [ ] The rest!
 - [ ] Memory
-- [ ] Graphics
+- [ ] Graphics subsystem
 - [ ] Other stuff
 
 ## Helpful Resources
