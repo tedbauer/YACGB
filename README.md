@@ -1,4 +1,4 @@
-# YACGB
+# Yacgb
 
 Yet another C GB emulator!
 
