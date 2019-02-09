@@ -97,9 +97,13 @@ void write_f(flag_t f, int val, int guard) {
 	}
 }
 
+int read_f(flag_t f) {
+	return (read_reg(F) | (1 << (4 - f)));
+}
+
 int read_nn() {
-	int byte1 = read_byte(mem, read_reg(PC+1));
-	int byte2 = read_byte(mem, read_reg(PC+2));
+	int byte1 = read_byte(mem, read_reg(PC)+1);
+	int byte2 = read_byte(mem, read_reg(PC)+2);
 
 	int result = 0;
 	result |= byte1;
@@ -334,7 +338,10 @@ void write_mem(int addr, int val) {
 	F(0x9c, return -1)                                        \
 	F(0x9d, return -1)                                        \
 	F(0x9e, return -1)                                        \
-	F(0x9f, return -1)                                        \
+	F(0x9f, /* SBC A. n */                                    \
+			int ncsum = read_reg(A) + read_f(fC);     \
+			write_reg(A, read_reg(A) - ncsum);        \
+			set_lclock(4))                            \
 	F(0xa0, return -1)                                        \
 	F(0xa1, return -1)                                        \
 	F(0xa2, return -1)                                        \
@@ -392,7 +399,57 @@ void write_mem(int addr, int val) {
 	F(0xcf, return -1)                                        \
 	F(0xd0, return -1)                                        \
 	F(0xd1, return -1)                                        \
-	F(0xd2, return -1)
+	F(0xd2, return -1)                                        \
+	F(0xd3, return -1)                                        \
+	F(0xd4, return -1)                                        \
+	F(0xd5, return -1)                                        \
+	F(0xd6, return -1)                                        \
+	F(0xd7, return -1)                                        \
+	F(0xd8, return -1)                                        \
+	F(0xd9, return -1)                                        \
+	F(0xda, return -1)                                        \
+	F(0xdb, return -1)                                        \
+	F(0xdc, return -1)                                        \
+	F(0xdd, return -1)                                        \
+	F(0xde, return -1)                                        \
+	F(0xdf, return -1)                                        \
+	F(0xe0, return -1)                                        \
+	F(0xe1, return -1)                                        \
+	F(0xe2, return -1)                                        \
+	F(0xe3, return -1)                                        \
+	F(0xe4, return -1)                                        \
+	F(0xe5, return -1)                                        \
+	F(0xe6, return -1)                                        \
+	F(0xe7, return -1)                                        \
+	F(0xe8, return -1)                                        \
+	F(0xe9, return -1)                                        \
+	F(0xea, return -1)                                        \
+	F(0xeb, return -1)                                        \
+	F(0xec, return -1)                                        \
+	F(0xed, return -1)                                        \
+	F(0xee, return -1)                                        \
+	F(0xef, return -1)                                        \
+	F(0xf0, return -1)                                        \
+	F(0xf1, return -1)                                        \
+	F(0xf2, return -1)                                        \
+	F(0xf3, return -1)                                        \
+	F(0xf4, return -1)                                        \
+	F(0xf5, return -1)                                        \
+	F(0xf6, return -1)                                        \
+	F(0xf7, return -1)                                        \
+	F(0xf8, return -1)                                        \
+	F(0xf9, return -1)                                        \
+	F(0xfa, return -1)                                        \
+	F(0xfb, return -1)                                        \
+	F(0xfc, return -1)                                        \
+	F(0xfd, return -1)                                        \
+	F(0xfe, /* CP d8 */ \
+			int result = read_reg(A) - read_n(); \
+			write_f(fZ, 1, result == 0); \
+			write_f(fN, 1, TRUE); \
+			write_f(fH, 1, !if_borrow(4, result, 1)); \
+			write_f(fC, 1, result < 0)) \
+	F(0xff, return -1)
 
 #define INSTR_FUNCS(OP, CMDS) int exec##OP() { CMDS; return 0; }
 #define INSTR_FUNCNAMES(OP, CMDS)  exec##OP,
