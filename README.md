@@ -16,3 +16,4 @@ Yet another C GB emulator
 - [Tomek's GB emulation blog post](https://blog.rekawek.eu/2017/02/09/coffee-gb/)
 - [Game Boy CPU manual](http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf)
 - [Game Boy CPU instruction set guide](http://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
+- [z80 Heaven](http://z80-heaven.wikidot.com/)
