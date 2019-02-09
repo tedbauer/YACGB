@@ -16,7 +16,7 @@ Yet another C GB emulator!
 - [ ] ROM parser
 - [ ] Graphics subsystem
 	- [ ] JavaScript frontend(?)
-- [ ] Fancy Debugger
+- [ ] Fancy debugger
 - [ ] Other stuff
 
 ## Helpful Resources
