@@ -6,7 +6,7 @@ Yet another C GB emulator
 
 - `make`: Build & run
 - `make emu`: Create binary executable `emu`
-- `make clean`: Clean up build stuff
+- `make clean`: Clean up build stuff and executable
 
 ## Tasks
 - [ ] CPU
