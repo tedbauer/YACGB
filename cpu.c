@@ -424,19 +424,32 @@ void pp_regs() {
 	F(0xfe, return -1) \
 	F(0xff, return -1)
 
+#define CBP_INSTR_FUNCS(OP, CMDS) int exec_cbp##OP() { CMDS; return 0; }
+#define CBP_INSTR_FUNCNAMES(OP, CMDS) exec_cbp##OP,
+#define EXEC_CBP_INSTR(instr) cbp_instrs[instr]()
+
+CBP_INSTR_TABLE(CBP_INSTR_FUNCS)
+int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
+
+#define EXEC_CBP_INSTR(instr)  cbp_instrs[instr]()
+
 #define BASE_INSTR_TABLE(F)                                              \
 	F(0x00, /* NOP */                                                \
 			asm("nop");                                      \
-			set_lclock(4))                                   \
+			set_lclock(4);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0x01, /* LD BC, nn */                                          \
 			write_reg(BC, read_nn());                        \
-			set_lclock(12))                                  \
+			set_lclock(12);                                  \
+			write_reg(PC, read_reg(PC)+3))                   \
 	F(0x02, /* LD (BC), A */                                         \
 			write_reg(BC, read_reg(A));                      \
-			set_lclock(8))                                   \
+			set_lclock(8);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0x03,  /* INC BC */                                            \
 			write_reg(BC, read_reg(BC)+1);                   \
-			set_lclock(8))                                   \
+			set_lclock(8);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0x04, /* INC B */                                              \
 			int b_orig = read_reg(B);                        \
 			int result = b_orig+1;                           \
@@ -444,7 +457,8 @@ void pp_regs() {
 			write_f(fZ, 1, read_reg(B) == 0);                \
 			write_f(fN, 0, TRUE);                            \
 			write_f(fH, 1, if_carry(3, b_orig, 1));          \
-			set_lclock(8))                                   \
+			set_lclock(8);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0x05, /* DEC B FIXME */                                        \
 			int b_orig = read_reg(B);                        \
 			int result = b_orig-1;                           \
@@ -452,10 +466,12 @@ void pp_regs() {
 			write_f(fZ, 1, result == 0);                     \
 			write_f(fN, 1, TRUE);                            \
 			write_f(fH, 1, !if_borrow(4, b_orig, 1));        \
-			set_lclock(4))                                   \
+			set_lclock(4);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0x06, /* LD B, n */                                            \
 			write_reg(B, read_n());                          \
-			set_lclock(8))                                   \
+			set_lclock(8);                                   \
+			write_reg(PC, read_reg(PC)+2))                   \
 	F(0x07, /* RLC A */                                              \
 			int a_orig = read_reg(A);                        \
 			int result = lrotate(a_orig, 7);                 \
@@ -463,10 +479,12 @@ void pp_regs() {
 			write_f(fC, a_orig & (1 << 7), TRUE);            \
 			write_f(fZ, 1, result == 0);                     \
 			write_f(fN, 0, TRUE);                            \
-			write_f(fH, 0, TRUE))                            \
+			write_f(fH, 0, TRUE);                            \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0x08, /* LD (nn), SP */                                        \
 			write_mem(read_nn(), read_reg(SP));              \
-			set_lclock(8))                                   \
+			set_lclock(8);                                   \
+			write_reg(PC, read_reg(PC)+3))                   \
 	F(0x09, return -1)                                               \
 	F(0x0a, return -1)                                               \
 	F(0x0b, return -1)                                               \
@@ -493,10 +511,12 @@ void pp_regs() {
 	F(0x20, /* JR NZ, n */                                           \
 			int n_addr = PC + read_n();                      \
 			if (read_f(fZ) == 0) write_reg(PC, n_addr);      \
-			set_lclock(8))                                   \
+			set_lclock(8);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0x21, /* LD HL, nn */                                          \
 			write_reg(HL, read_nn());                        \
-			set_lclock(12))                                  \
+			set_lclock(12);                                  \
+			write_reg(PC, read_reg(PC)+3))                   \
 	F(0x22, return -1)                                               \
 	F(0x23, return -1)                                               \
 	F(0x24, return -1)                                               \
@@ -514,10 +534,12 @@ void pp_regs() {
 	F(0x30, return -1)                                               \
 	F(0x31, /* LD SP, nn */                                          \
 			write_reg(SP, read_nn());                        \
-			set_lclock(12))                                  \
+			set_lclock(12);                                  \
+			write_reg(PC, read_reg(PC)+3))                   \
 	F(0x32, /* LD (HL), A */                                         \
 			write_mem(read_reg(HL), read_reg(A)-1);          \
-			set_lclock(8))                                   \
+			set_lclock(8);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0x33, return -1)                                               \
 	F(0x34, return -1)                                               \
 	F(0x35, return -1)                                               \
@@ -593,7 +615,8 @@ void pp_regs() {
 	F(0x7b, return -1)                                               \
 	F(0x7c, /* LD A, H */                                            \
 			write_reg(A, read_reg(H));                       \
-			set_lclock(4))                                   \
+			set_lclock(4);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0x7d, return -1)                                               \
 	F(0x7e, return -1)                                               \
 	F(0x7f, return -1)                                               \
@@ -631,7 +654,8 @@ void pp_regs() {
 	F(0x9f, /* SBC A. n */                                           \
 			int ncsum = read_reg(A) + read_f(fC);            \
 			write_reg(A, read_reg(A) - ncsum);               \
-			set_lclock(4))                                   \
+			set_lclock(4);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0xa0, return -1)                                               \
 	F(0xa1, return -1)                                               \
 	F(0xa2, return -1)                                               \
@@ -654,7 +678,8 @@ void pp_regs() {
 			write_f(fN, 0, TRUE);                            \
 			write_f(fH, 0, TRUE);                            \
 			write_f(fC, 0, TRUE);                            \
-			set_lclock(4))                                   \
+			set_lclock(4);                                   \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0xb0, return -1)                                               \
 	F(0xb1, return -1)                                               \
 	F(0xb2, return -1)                                               \
@@ -682,7 +707,8 @@ void pp_regs() {
 	F(0xc8, return -1)                                               \
 	F(0xc9, return -1)                                               \
 	F(0xca, return -1)                                               \
-	F(0xcb, return -1)                                               \
+	F(0xcb,  /* CB */                                                \
+			EXEC_CBP_INSTR(read_n()))                        \
 	F(0xcc, return -1)                                               \
 	F(0xcd, return -1)                                               \
 	F(0xce, return -1)                                               \
@@ -731,7 +757,8 @@ void pp_regs() {
 	F(0xf9, return -1)                                               \
 	F(0xfa, return -1)                                               \
 	F(0xfb, /* EI */                                                 \
-			printf("Interrupts enabled. TODO: interrupts.")) \
+			printf("Interrupts enabled. TODO: interrupts."); \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0xfc, return -1)                                               \
 	F(0xfd, return -1)                                               \
 	F(0xfe, /* CP d8 */                                              \
@@ -739,26 +766,21 @@ void pp_regs() {
 			write_f(fZ, 1, result == 0);                     \
 			write_f(fN, 1, TRUE);                            \
 			write_f(fH, 1, !if_borrow(4, result, 1));        \
-			write_f(fC, 1, result < 0))                      \
+	 		write_f(fC, 1, result < 0);                      \
+			write_reg(PC, read_reg(PC)+1))                   \
 	F(0xff, /* RST 38 */                                             \
 			push(read_reg(PC));                              \
-			write_reg(PC, read_n()))
+			write_reg(PC, read_n());                         \
+			write_reg(PC, read_reg(PC)+1))
 
 #define BASE_INSTR_FUNCS(OP, CMDS) int exec_base##OP() { CMDS; return 0; }
 #define BASE_INSTR_FUNCNAMES(OP, CMDS)  exec_base##OP,
 #define EXEC_BASE_INSTR(instr) base_instrs[instr]()
 
-#define CBP_INSTR_FUNCS(OP, CMDS) int exec_cbp##OP() { CMDS; return 0; }
-#define CBP_INSTR_FUNCNAMES(OP, CMDS) exec_cbp##OP,
-#define EXEC_CBP_INSTR(instr) cbp_instrs[instr]()
-
 BASE_INSTR_TABLE(BASE_INSTR_FUNCS)
 int (*base_instrs[])() = { BASE_INSTR_TABLE(BASE_INSTR_FUNCNAMES) };
 
-CBP_INSTR_TABLE(CBP_INSTR_FUNCS)
-int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
-
-#define EXEC_INSTR(instr) base_instrs[instr]()
+#define EXEC_BASE_INSTR(instr) base_instrs[instr]()
 
 int step_cpu() {
 	int pc = read_reg(PC);
@@ -768,7 +790,6 @@ int step_cpu() {
 		printf("Error: unimplemented instruction.\n");
 		return -1;
 	};
-	write_reg(PC, pc+1);
 	//pp_regs();
 	return 0;
 }
