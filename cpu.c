@@ -98,9 +98,14 @@ void write_f(flag_t f, int val, int guard) {
 }
 
 int read_nn() {
-	perror("Implement me!");
-	int bad;
-	return bad;
+	int byte1 = read_byte(mem, read_reg(PC+1));
+	int byte2 = read_byte(mem, read_reg(PC+2));
+
+	int result = 0;
+	result |= byte1;
+	result |= (byte2 << 8);
+
+	return result;
 }
 
 int read_n() {
@@ -175,175 +180,176 @@ void write_mem(int addr, int val) {
 	F(0x08, /* LD (nn), SP */                                 \
 			write_mem(read_nn(), read_reg(SP));       \
 			set_lclock(8))                            \
-	F(0x09, perror("Unimplemented."))                         \
-	F(0x0a, perror("Unimplemented."))                         \
-	F(0x0b, perror("Unimplemented."))                         \
-	F(0x0c, perror("Unimplemented."))                         \
-	F(0x0d, perror("Unimplemented."))                         \
-	F(0x0e, perror("Unimplemented."))                         \
-	F(0x0f, perror("Unimplemented."))                         \
-	F(0x10, perror("Unimplemented."))                         \
-	F(0x11, perror("Unimplemented."))                         \
-	F(0x12, perror("Unimplemented."))                         \
-	F(0x13, perror("Unimplemented."))                         \
-	F(0x14, perror("Unimplemented."))                         \
-	F(0x15, perror("Unimplemented."))                         \
-	F(0x16, perror("Unimplemented."))                         \
-	F(0x17, perror("Unimplemented."))                         \
-	F(0x18, perror("Unimplemented."))                         \
-	F(0x19, perror("Unimplemented."))                         \
-	F(0x1a, perror("Unimplemented."))                         \
-	F(0x1b, perror("Unimplemented."))                         \
-	F(0x1c, perror("Unimplemented."))                         \
-	F(0x1d, perror("Unimplemented."))                         \
-	F(0x1e, perror("Unimplemented."))                         \
-	F(0x1f, perror("Unimplemented."))                         \
-	F(0x20, perror("Unimplemented."))                         \
+	F(0x09, return -1)                                        \
+	F(0x0a, return -1)                                        \
+	F(0x0b, return -1)                                        \
+	F(0x0c, return -1)                                        \
+	F(0x0d, return -1)                                        \
+	F(0x0e, return -1)                                        \
+	F(0x0f, return -1)                                        \
+	F(0x10, return -1)                                        \
+	F(0x11, return -1)                                        \
+	F(0x12, return -1)                                        \
+	F(0x13, return -1)                                        \
+	F(0x14, return -1)                                        \
+	F(0x15, return -1)                                        \
+	F(0x16, return -1)                                        \
+	F(0x17, return -1)                                        \
+	F(0x18, return -1)                                        \
+	F(0x19, return -1)                                        \
+	F(0x1a, return -1)                                        \
+	F(0x1b, return -1)                                        \
+	F(0x1c, return -1)                                        \
+	F(0x1d, return -1)                                        \
+	F(0x1e, return -1)                                        \
+	F(0x1f, return -1)                                        \
+	F(0x20, return -1)                                        \
 	F(0x21, /* LD HL, nn */                                   \
 			write_reg(HL, read_nn());                 \
 			set_lclock(12))                           \
-	F(0x22, perror("Unimplemented."))                         \
-	F(0x23, perror("Unimplemented."))                         \
-	F(0x24, perror("Unimplemented."))                         \
-	F(0x25, perror("Unimplemented."))                         \
-	F(0x26, perror("Unimplemented."))                         \
-	F(0x27, perror("Unimplemented."))                         \
-	F(0x28, perror("Unimplemented."))                         \
-	F(0x29, perror("Unimplemented."))                         \
-	F(0x2a, perror("Unimplemented."))                         \
-	F(0x2b, perror("Unimplemented."))                         \
-	F(0x2c, perror("Unimplemented."))                         \
-	F(0x2d, perror("Unimplemented."))                         \
-	F(0x2e, perror("Unimplemented."))                         \
-	F(0x2f, perror("Unimplemented."))                         \
-	F(0x30, perror("Unimplemented."))                         \
+	F(0x22, return -1)                                        \
+	F(0x23, return -1)                                        \
+	F(0x24, return -1)                                        \
+	F(0x25, return -1)                                        \
+	F(0x26, return -1)                                        \
+	F(0x27, return -1)                                        \
+	F(0x28, return -1)                                        \
+	F(0x29, return -1)                                        \
+	F(0x2a, return -1)                                        \
+	F(0x2b, return -1)                                        \
+	F(0x2c, return -1)                                        \
+	F(0x2d, return -1)                                        \
+	F(0x2e, return -1)                                        \
+	F(0x2f, return -1)                                        \
+	F(0x30, return -1)                                        \
 	F(0x31, /* LD SP, nn */                                   \
-			write_reg(SP, read_nn()))                 \
-	F(0x32, perror("Unimplemented."))                         \
-	F(0x33, perror("Unimplemented."))                         \
-	F(0x34, perror("Unimplemented."))                         \
-	F(0x35, perror("Unimplemented."))                         \
-	F(0x36, perror("Unimplemented."))                         \
-	F(0x37, perror("Unimplemented."))                         \
-	F(0x38, perror("Unimplemented."))                         \
-	F(0x39, perror("Unimplemented."))                         \
-	F(0x3a, perror("Unimplemented."))                         \
-	F(0x3b, perror("Unimplemented."))                         \
-	F(0x3c, perror("Unimplemented."))                         \
-	F(0x3d, perror("Unimplemented."))                         \
-	F(0x3e, perror("Unimplemented."))                         \
-	F(0x3f, perror("Unimplemented."))                         \
-	F(0x40, perror("Unimplemented."))                         \
-	F(0x41, perror("Unimplemented."))                         \
-	F(0x42, perror("Unimplemented."))                         \
-	F(0x43, perror("Unimplemented."))                         \
-	F(0x44, perror("Unimplemented."))                         \
-	F(0x45, perror("Unimplemented."))                         \
-	F(0x46, perror("Unimplemented."))                         \
-	F(0x47, perror("Unimplemented."))                         \
-	F(0x48, perror("Unimplemented."))                         \
-	F(0x49, perror("Unimplemented."))                         \
-	F(0x4a, perror("Unimplemented."))                         \
-	F(0x4b, perror("Unimplemented."))                         \
-	F(0x4c, perror("Unimplemented."))                         \
-	F(0x4d, perror("Unimplemented."))                         \
-	F(0x4e, perror("Unimplemented."))                         \
-	F(0x4f, perror("Unimplemented."))                         \
-	F(0x50, perror("Unimplemented."))                         \
-	F(0x51, perror("Unimplemented."))                         \
-	F(0x52, perror("Unimplemented."))                         \
-	F(0x53, perror("Unimplemented."))                         \
-	F(0x54, perror("Unimplemented."))                         \
-	F(0x55, perror("Unimplemented."))                         \
-	F(0x56, perror("Unimplemented."))                         \
-	F(0x57, perror("Unimplemented."))                         \
-	F(0x58, perror("Unimplemented."))                         \
-	F(0x59, perror("Unimplemented."))                         \
-	F(0x5a, perror("Unimplemented."))                         \
-	F(0x5b, perror("Unimplemented."))                         \
-	F(0x5c, perror("Unimplemented."))                         \
-	F(0x5d, perror("Unimplemented."))                         \
-	F(0x5e, perror("Unimplemented."))                         \
-	F(0x5f, perror("Unimplemented."))                         \
-	F(0x60, perror("Unimplemented."))                         \
-	F(0x61, perror("Unimplemented."))                         \
-	F(0x62, perror("Unimplemented."))                         \
-	F(0x63, perror("Unimplemented."))                         \
-	F(0x64, perror("Unimplemented."))                         \
-	F(0x65, perror("Unimplemented."))                         \
-	F(0x66, perror("Unimplemented."))                         \
-	F(0x67, perror("Unimplemented."))                         \
-	F(0x68, perror("Unimplemented."))                         \
-	F(0x69, perror("Unimplemented."))                         \
-	F(0x6a, perror("Unimplemented."))                         \
-	F(0x6b, perror("Unimplemented."))                         \
-	F(0x6c, perror("Unimplemented."))                         \
-	F(0x6d, perror("Unimplemented."))                         \
-	F(0x6e, perror("Unimplemented."))                         \
-	F(0x6f, perror("Unimplemented."))                         \
-	F(0x70, perror("Unimplemented."))                         \
-	F(0x71, perror("Unimplemented."))                         \
-	F(0x72, perror("Unimplemented."))                         \
-	F(0x73, perror("Unimplemented."))                         \
-	F(0x74, perror("Unimplemented."))                         \
-	F(0x75, perror("Unimplemented."))                         \
-	F(0x76, perror("Unimplemented."))                         \
-	F(0x77, perror("Unimplemented."))                         \
-	F(0x78, perror("Unimplemented."))                         \
-	F(0x79, perror("Unimplemented."))                         \
-	F(0x7a, perror("Unimplemented."))                         \
-	F(0x7b, perror("Unimplemented."))                         \
-	F(0x7c, perror("Unimplemented."))                         \
-	F(0x7d, perror("Unimplemented."))                         \
-	F(0x7e, perror("Unimplemented."))                         \
-	F(0x7f, perror("Unimplemented."))                         \
-	F(0x80, perror("Unimplemented."))                         \
-	F(0x81, perror("Unimplemented."))                         \
-	F(0x82, perror("Unimplemented."))                         \
-	F(0x83, perror("Unimplemented."))                         \
-	F(0x84, perror("Unimplemented."))                         \
-	F(0x85, perror("Unimplemented."))                         \
-	F(0x86, perror("Unimplemented."))                         \
-	F(0x87, perror("Unimplemented."))                         \
-	F(0x88, perror("Unimplemented."))                         \
-	F(0x89, perror("Unimplemented."))                         \
-	F(0x8a, perror("Unimplemented."))                         \
-	F(0x8b, perror("Unimplemented."))                         \
-	F(0x8c, perror("Unimplemented."))                         \
-	F(0x8d, perror("Unimplemented."))                         \
-	F(0x8e, perror("Unimplemented."))                         \
-	F(0x8f, perror("Unimplemented."))                         \
-	F(0x90, perror("Unimplemented."))                         \
-	F(0x91, perror("Unimplemented."))                         \
-	F(0x92, perror("Unimplemented."))                         \
-	F(0x93, perror("Unimplemented."))                         \
-	F(0x94, perror("Unimplemented."))                         \
-	F(0x95, perror("Unimplemented."))                         \
-	F(0x96, perror("Unimplemented."))                         \
-	F(0x97, perror("Unimplemented."))                         \
-	F(0x98, perror("Unimplemented."))                         \
-	F(0x99, perror("Unimplemented."))                         \
-	F(0x9a, perror("Unimplemented."))                         \
-	F(0x9b, perror("Unimplemented."))                         \
-	F(0x9c, perror("Unimplemented."))                         \
-	F(0x9d, perror("Unimplemented."))                         \
-	F(0x9e, perror("Unimplemented."))                         \
-	F(0x9f, perror("Unimplemented."))                         \
-	F(0xa0, perror("Unimplemented."))                         \
-	F(0xa1, perror("Unimplemented."))                         \
-	F(0xa2, perror("Unimplemented."))                         \
-	F(0xa3, perror("Unimplemented."))                         \
-	F(0xa4, perror("Unimplemented."))                         \
-	F(0xa5, perror("Unimplemented."))                         \
-	F(0xa6, perror("Unimplemented."))                         \
-	F(0xa7, perror("Unimplemented."))                         \
-	F(0xa8, perror("Unimplemented."))                         \
-	F(0xa9, perror("Unimplemented."))                         \
-	F(0xaa, perror("Unimplemented."))                         \
-	F(0xab, perror("Unimplemented."))                         \
-	F(0xac, perror("Unimplemented."))                         \
-	F(0xad, perror("Unimplemented."))                         \
-	F(0xae, perror("Unimplemented."))                         \
+			write_reg(SP, read_nn());                 \
+			set_lclock(12))                           \
+	F(0x32, return -1)                                        \
+	F(0x33, return -1)                                        \
+	F(0x34, return -1)                                        \
+	F(0x35, return -1)                                        \
+	F(0x36, return -1)                                        \
+	F(0x37, return -1)                                        \
+	F(0x38, return -1)                                        \
+	F(0x39, return -1)                                        \
+	F(0x3a, return -1)                                        \
+	F(0x3b, return -1)                                        \
+	F(0x3c, return -1)                                        \
+	F(0x3d, return -1)                                        \
+	F(0x3e, return -1)                                        \
+	F(0x3f, return -1)                                        \
+	F(0x40, return -1)                                        \
+	F(0x41, return -1)                                        \
+	F(0x42, return -1)                                        \
+	F(0x43, return -1)                                        \
+	F(0x44, return -1)                                        \
+	F(0x45, return -1)                                        \
+	F(0x46, return -1)                                        \
+	F(0x47, return -1)                                        \
+	F(0x48, return -1)                                        \
+	F(0x49, return -1)                                        \
+	F(0x4a, return -1)                                        \
+	F(0x4b, return -1)                                        \
+	F(0x4c, return -1)                                        \
+	F(0x4d, return -1)                                        \
+	F(0x4e, return -1)                                        \
+	F(0x4f, return -1)                                        \
+	F(0x50, return -1)                                        \
+	F(0x51, return -1)                                        \
+	F(0x52, return -1)                                        \
+	F(0x53, return -1)                                        \
+	F(0x54, return -1)                                        \
+	F(0x55, return -1)                                        \
+	F(0x56, return -1)                                        \
+	F(0x57, return -1)                                        \
+	F(0x58, return -1)                                        \
+	F(0x59, return -1)                                        \
+	F(0x5a, return -1)                                        \
+	F(0x5b, return -1)                                        \
+	F(0x5c, return -1)                                        \
+	F(0x5d, return -1)                                        \
+	F(0x5e, return -1)                                        \
+	F(0x5f, return -1)                                        \
+	F(0x60, return -1)                                        \
+	F(0x61, return -1)                                        \
+	F(0x62, return -1)                                        \
+	F(0x63, return -1)                                        \
+	F(0x64, return -1)                                        \
+	F(0x65, return -1)                                        \
+	F(0x66, return -1)                                        \
+	F(0x67, return -1)                                        \
+	F(0x68, return -1)                                        \
+	F(0x69, return -1)                                        \
+	F(0x6a, return -1)                                        \
+	F(0x6b, return -1)                                        \
+	F(0x6c, return -1)                                        \
+	F(0x6d, return -1)                                        \
+	F(0x6e, return -1)                                        \
+	F(0x6f, return -1)                                        \
+	F(0x70, return -1)                                        \
+	F(0x71, return -1)                                        \
+	F(0x72, return -1)                                        \
+	F(0x73, return -1)                                        \
+	F(0x74, return -1)                                        \
+	F(0x75, return -1)                                        \
+	F(0x76, return -1)                                        \
+	F(0x77, return -1)                                        \
+	F(0x78, return -1)                                        \
+	F(0x79, return -1)                                        \
+	F(0x7a, return -1)                                        \
+	F(0x7b, return -1)                                        \
+	F(0x7c, return -1)                                        \
+	F(0x7d, return -1)                                        \
+	F(0x7e, return -1)                                        \
+	F(0x7f, return -1)                                        \
+	F(0x80, return -1)                                        \
+	F(0x81, return -1)                                        \
+	F(0x82, return -1)                                        \
+	F(0x83, return -1)                                        \
+	F(0x84, return -1)                                        \
+	F(0x85, return -1)                                        \
+	F(0x86, return -1)                                        \
+	F(0x87, return -1)                                        \
+	F(0x88, return -1)                                        \
+	F(0x89, return -1)                                        \
+	F(0x8a, return -1)                                        \
+	F(0x8b, return -1)                                        \
+	F(0x8c, return -1)                                        \
+	F(0x8d, return -1)                                        \
+	F(0x8e, return -1)                                        \
+	F(0x8f, return -1)                                        \
+	F(0x90, return -1)                                        \
+	F(0x91, return -1)                                        \
+	F(0x92, return -1)                                        \
+	F(0x93, return -1)                                        \
+	F(0x94, return -1)                                        \
+	F(0x95, return -1)                                        \
+	F(0x96, return -1)                                        \
+	F(0x97, return -1)                                        \
+	F(0x98, return -1)                                        \
+	F(0x99, return -1)                                        \
+	F(0x9a, return -1)                                        \
+	F(0x9b, return -1)                                        \
+	F(0x9c, return -1)                                        \
+	F(0x9d, return -1)                                        \
+	F(0x9e, return -1)                                        \
+	F(0x9f, return -1)                                        \
+	F(0xa0, return -1)                                        \
+	F(0xa1, return -1)                                        \
+	F(0xa2, return -1)                                        \
+	F(0xa3, return -1)                                        \
+	F(0xa4, return -1)                                        \
+	F(0xa5, return -1)                                        \
+	F(0xa6, return -1)                                        \
+	F(0xa7, return -1)                                        \
+	F(0xa8, return -1)                                        \
+	F(0xa9, return -1)                                        \
+	F(0xaa, return -1)                                        \
+	F(0xab, return -1)                                        \
+	F(0xac, return -1)                                        \
+	F(0xad, return -1)                                        \
+	F(0xae, return -1)                                        \
 	F(0xaf, /* XOR A */                                       \
 			int result = read_reg(A) ^ read_reg(A);   \
 			write_reg(A, result);                     \
@@ -352,55 +358,59 @@ void write_mem(int addr, int val) {
 			write_f(fH, 0, TRUE);                     \
 			write_f(fC, 0, TRUE);                     \
 			set_lclock(4))                            \
-	F(0xb0, perror("Unimplemented."))                         \
-	F(0xb1, perror("Unimplemented."))                         \
-	F(0xb2, perror("Unimplemented."))                         \
-	F(0xb3, perror("Unimplemented."))                         \
-	F(0xb4, perror("Unimplemented."))                         \
-	F(0xb5, perror("Unimplemented."))                         \
-	F(0xb6, perror("Unimplemented."))                         \
-	F(0xb7, perror("Unimplemented."))                         \
-	F(0xb8, perror("Unimplemented."))                         \
-	F(0xb9, perror("Unimplemented."))                         \
-	F(0xba, perror("Unimplemented."))                         \
-	F(0xbb, perror("Unimplemented."))                         \
-	F(0xbc, perror("Unimplemented."))                         \
-	F(0xbd, perror("Unimplemented."))                         \
-	F(0xbe, perror("Unimplemented."))                         \
-	F(0xbf, perror("Unimplemented."))                         \
-	F(0xc0, perror("Unimplemented."))                         \
-	F(0xc1, perror("Unimplemented."))                         \
-	F(0xc2, perror("Unimplemented."))                         \
-	F(0xc3, perror("Unimplemented."))                         \
-	F(0xc4, perror("Unimplemented."))                         \
-	F(0xc5, perror("Unimplemented."))                         \
-	F(0xc6, perror("Unimplemented."))                         \
-	F(0xc7, perror("Unimplemented."))                         \
-	F(0xc8, perror("Unimplemented."))                         \
-	F(0xc9, perror("Unimplemented."))                         \
-	F(0xca, perror("Unimplemented."))                         \
-	F(0xcb, perror("Unimplemented."))                         \
-	F(0xcc, perror("Unimplemented."))                         \
-	F(0xcd, perror("Unimplemented."))                         \
-	F(0xce, perror("Unimplemented."))                         \
-	F(0xcf, perror("Unimplemented."))                         \
-	F(0xd0, perror("Unimplemented."))                         \
-	F(0xd1, perror("Unimplemented."))                         \
-	F(0xd2, perror("Unimplemented."))
+	F(0xb0, return -1)                                        \
+	F(0xb1, return -1)                                        \
+	F(0xb2, return -1)                                        \
+	F(0xb3, return -1)                                        \
+	F(0xb4, return -1)                                        \
+	F(0xb5, return -1)                                        \
+	F(0xb6, return -1)                                        \
+	F(0xb7, return -1)                                        \
+	F(0xb8, return -1)                                        \
+	F(0xb9, return -1)                                        \
+	F(0xba, return -1)                                        \
+	F(0xbb, return -1)                                        \
+	F(0xbc, return -1)                                        \
+	F(0xbd, return -1)                                        \
+	F(0xbe, return -1)                                        \
+	F(0xbf, return -1)                                        \
+	F(0xc0, return -1)                                        \
+	F(0xc1, return -1)                                        \
+	F(0xc2, return -1)                                        \
+	F(0xc3, return -1)                                        \
+	F(0xc4, return -1)                                        \
+	F(0xc5, return -1)                                        \
+	F(0xc6, return -1)                                        \
+	F(0xc7, return -1)                                        \
+	F(0xc8, return -1)                                        \
+	F(0xc9, return -1)                                        \
+	F(0xca, return -1)                                        \
+	F(0xcb, return -1)                                        \
+	F(0xcc, return -1)                                        \
+	F(0xcd, return -1)                                        \
+	F(0xce, return -1)                                        \
+	F(0xcf, return -1)                                        \
+	F(0xd0, return -1)                                        \
+	F(0xd1, return -1)                                        \
+	F(0xd2, return -1)
 
-#define INSTR_FUNCS(OP, CMDS) void exec##OP() { CMDS; }
+#define INSTR_FUNCS(OP, CMDS) int exec##OP() { CMDS; return 0; }
 #define INSTR_FUNCNAMES(OP, CMDS)  exec##OP,
 #define EXEC_INSTR(instr) instructions[instr]()
 
 INSTR_TABLE(INSTR_FUNCS)
-void (*instructions[])() = { INSTR_TABLE(INSTR_FUNCNAMES) };
+int (*instructions[])() = { INSTR_TABLE(INSTR_FUNCNAMES) };
 
 #define EXEC_INSTR(instr) instructions[instr]()
 
-void step_cpu() {
+int step_cpu() {
 	int pc = read_reg(PC);
 	char* instr = read_byte(mem, pc);
-	printf("Executing instruction %d. PC is %d. \n", (int)instr, pc);
-	EXEC_INSTR((int)instr);
+	printf("Executing instruction %x. PC is %d. \n", (int)instr, pc);
+	if (EXEC_INSTR((int)instr)) {
+		printf("Error: unimplemented instruction.\n");
+		return -1;
+	};
 	write_reg(PC, pc+1);
+	return 0;
 }
