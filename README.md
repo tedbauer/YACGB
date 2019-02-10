@@ -15,7 +15,6 @@ Yet another C GB emulator!
 - [ ] Memory
 - [ ] ROM parser
 - [ ] Graphics subsystem
-	- [ ] JavaScript frontend(?)
 - [ ] Fancy debugger
 - [ ] Other stuff
 
