@@ -28,7 +28,7 @@ typedef enum {
 } flag_t;
 
 typedef struct {
-	uint8_t registers[10];
+	int registers[10];
 	unsigned int lc;
 } cpu_state_t;
 
@@ -146,20 +146,20 @@ int pop() {
 
 void pp_regs() {
 	printf("-- Register Status --\n");
-	printf("PC: %#x\n", read_reg(PC));
-	printf("SP: %#x\n", read_reg(SP));
-	printf("A : %#x\n", read_reg(A));
-	printf("B : %#x\n", read_reg(B));
-	printf("C : %#x\n", read_reg(C));
-	printf("D : %#x\n", read_reg(D));
-	printf("E : %#x\n", read_reg(E));
-	printf("F : %#x\n", read_reg(F));
-	printf("H : %#x\n", read_reg(H));
-	printf("L : %#x\n", read_reg(L));
-	printf("AF: %#x\n", read_reg(AF));
-	printf("BC: %#x\n", read_reg(BC));
-	printf("DE: %#x\n", read_reg(DE));
-	printf("HL: %#x\n", read_reg(HL));
+	printf("PC: %#06x\n", read_reg(PC));
+	printf("SP: %#06x\n", read_reg(SP));
+	printf("A : %#06x\n", read_reg(A));
+	printf("B : %#06x\n", read_reg(B));
+	printf("C : %#06x\n", read_reg(C));
+	printf("D : %#06x\n", read_reg(D));
+	printf("E : %#06x\n", read_reg(E));
+	printf("F : %#06x\n", read_reg(F));
+	printf("H : %#06x\n", read_reg(H));
+	printf("L : %#06x\n", read_reg(L));
+	printf("AF: %#06x\n", read_reg(AF));
+	printf("BC: %#06x\n", read_reg(BC));
+	printf("DE: %#06x\n", read_reg(DE));
+	printf("HL: %#06x\n", read_reg(HL));
 }
 
 typedef struct {
@@ -840,6 +840,6 @@ int step_cpu() {
 		printf("Error: unimplemented instruction.\n");
 		return -1;
 	};
-	//pp_regs();
+	pp_regs();
 	return 0;
 }

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define IN_RANGE(addr, start, end) (addr >= start && addr <= end)
 
@@ -45,7 +46,7 @@ typedef struct {
 	int working_ram[16384];
 	int gfx_sinfo[160];
 	int mm_io[128];
-	int z_ram[128];
+	int z_ram[96];
 } mem_state_t;
 
 mem_state_t* init_mem() {
@@ -61,14 +62,14 @@ void cleanup_mem(mem_state_t* mem) {
 
 int* read_ptr(mem_state_t* mem, int addr) {
 
+	assert(IN_RANGE(addr, 0x0000, 0xFFFF));
+
 	// ROM bank 0
 	if IN_RANGE(addr, 0x0000, 0x3FFF) {
 
 		// BIOS
-		if IN_RANGE(addr, 0x0000, 0x00FF) {
-			if (mem->bios_stat) {
-				return &mem->bios[addr];
-			}
+		if (IN_RANGE(addr, 0x0000, 0x00FF) && mem->bios_stat) {
+			return &mem->bios[addr];
 		} else {
 			return &mem->rom_bank0[addr];
 		}
@@ -84,6 +85,42 @@ int* read_ptr(mem_state_t* mem, int addr) {
 		return &mem->gpu_vram[addr - 0x8000];
 	}
 
+	// External RAM
+	else if IN_RANGE(addr, 0xA000, 0xBFFF) {
+		return &mem->ext_ram[addr - 0xA000];
+	}
+
+	// Working RAM
+	else if IN_RANGE(addr, 0xC000, 0xDFFF) {
+		return &mem->working_ram[addr - 0xC000];
+	}
+
+	// Working RAM Shadow
+	else if IN_RANGE(addr, 0xE000, 0xFDFF) {
+		return &mem->working_ram[addr - 0xE000];
+	}
+
+	// Sprite information
+	else if IN_RANGE(addr, 0xFE00, 0xFE9F) {
+		return &mem->gfx_sinfo[addr - 0xFE00];
+	}
+
+	// Memory-mapped IO
+	else if IN_RANGE(addr, 0xFF00, 0xFF7F) {
+		return &mem->mm_io[addr - 0xFF00];
+	}
+
+	// Zero-page RAM
+	else if IN_RANGE(addr, 0xFF80, 0xFFFF) {
+		return &mem->z_ram[addr - 0xFF80];
+	}
+
+	// Error!
+	else {
+		assert(0);
+	}
+
+	return NULL;
 
 }
 
