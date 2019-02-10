@@ -11,7 +11,7 @@ run: emu
 emu: emu.o cpu.o mem.o
 	$(CC) $(CFLAGS) -o emu emu.o cpu.o mem.o
 
-cpu.o: cpu.c cpu.h mem.h
+cpu.o: cpu.c cpu.h mem.c mem.h
 	$(CC) $(CFLAGS) -c cpu.c
 
 mem.o: mem.c mem.h

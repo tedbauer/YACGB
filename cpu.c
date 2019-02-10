@@ -132,13 +132,9 @@ int cpu_cleanup() {
 	return 0;
 }
 
-void write_mem(int addr, int val) {
-	perror("Implement me!");
-}
-
 int push(int val) {
 	write_reg(SP, read_reg(SP)-2);
-	write_mem(read_reg(SP), val);
+	write_byte(mem, read_reg(SP), val);
 	return 0;
 }
 
@@ -442,360 +438,389 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 
 #define EXEC_CBP_INSTR(instr)  cbp_instrs[instr]()
 
-#define BASE_INSTR_TABLE(F)                                              \
-	F(0x00, "NOP",                                                   \
-			asm("nop");                                      \
-			set_lclock(4);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0x01, "LD BC, nn",                                             \
-			write_reg(BC, read_nn());                        \
-			set_lclock(12);                                  \
-			write_reg(PC, read_reg(PC)+3))                   \
-	F(0x02, "LD (BC), A",                                            \
-			write_reg(BC, read_reg(A));                      \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0x03, "INC BC",                                                \
-			write_reg(BC, read_reg(BC)+1);                   \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0x04, "INC B",                                                 \
-			int b_orig = read_reg(B);                        \
-			int result = b_orig+1;                           \
-			write_reg(B, result);                            \
-			write_f(fZ, 1, read_reg(B) == 0);                \
-			write_f(fN, 0, TRUE);                            \
-			write_f(fH, 1, if_carry(3, b_orig, 1));          \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0x05, "DEC B FIXME",                                           \
-			int b_orig = read_reg(B);                        \
-			int result = b_orig-1;                           \
-			write_reg(B, result);                            \
-			write_f(fZ, 1, result == 0);                     \
-			write_f(fN, 1, TRUE);                            \
-			write_f(fH, 1, !if_borrow(4, b_orig, 1));        \
-			set_lclock(4);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0x06, "LD B, n",                                               \
-			write_reg(B, read_n());                          \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+2))                   \
-	F(0x07, "RLC A",                                                 \
-			int a_orig = read_reg(A);                        \
-			int result = lrotate(a_orig, 7);                 \
-			write_reg(A, result);                            \
-			write_f(fC, a_orig & (1 << 7), TRUE);            \
-			write_f(fZ, 1, result == 0);                     \
-			write_f(fN, 0, TRUE);                            \
-			write_f(fH, 0, TRUE);                            \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0x08, "LD (nn), SP",                                           \
-			write_mem(read_nn(), read_reg(SP));              \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+3))                   \
-	F(0x09, "", return -1)                                           \
-	F(0x0a, "", return -1)                                           \
-	F(0x0b, "", return -1)                                           \
-	F(0x0c, "INC C",                                                 \
-			int result = read_reg(C)+1;                      \
-			write_f(fZ, 1, result == 0);                     \
-			write_f(fN, 0, TRUE);                            \
-			write_f(fH, 1, if_carry(3, read_reg(C), 1));     \
-			write_reg(PC, read_reg(PC)+1);                   \
-			set_lclock(4);                                   \
-			write_reg(C, result))                            \
-	F(0x0d, "", return -1)                                           \
-	F(0x0e, "LD C, n",                                               \
-			write_reg(C, read_n());                          \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+2))                   \
-	F(0x0f, "", return -1)                                           \
-	F(0x10, "", return -1)                                           \
-	F(0x11, "", return -1)                                           \
-	F(0x12, "", return -1)                                           \
-	F(0x13, "", return -1)                                           \
-	F(0x14, "", return -1)                                           \
-	F(0x15, "", return -1)                                           \
-	F(0x16, "", return -1)                                           \
-	F(0x17, "", return -1)                                           \
-	F(0x18, "", return -1)                                           \
-	F(0x19, "", return -1)                                           \
-	F(0x1a, "", return -1)                                           \
-	F(0x1b, "", return -1)                                           \
-	F(0x1c, "", return -1)                                           \
-	F(0x1d, "", return -1)                                           \
-	F(0x1e, "", return -1)                                           \
-	F(0x1f, "", return -1)                                           \
-	F(0x20, "JR NZ, n",                                              \
-			int n_addr = PC + read_n();                      \
-			if (read_f(fZ) == 0) write_reg(PC, n_addr);      \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0x21, "LD HL, nn",                                             \
-			write_reg(HL, read_nn());                        \
-			set_lclock(12);                                  \
-			write_reg(PC, read_reg(PC)+3))                   \
-	F(0x22, "", return -1)                                           \
-	F(0x23, "", return -1)                                           \
-	F(0x24, "", return -1)                                           \
-	F(0x25, "", return -1)                                           \
-	F(0x26, "", return -1)                                           \
-	F(0x27, "", return -1)                                           \
-	F(0x28, "", return -1)                                           \
-	F(0x29, "", return -1)                                           \
-	F(0x2a, "", return -1)                                           \
-	F(0x2b, "", return -1)                                           \
-	F(0x2c, "", return -1)                                           \
-	F(0x2d, "", return -1)                                           \
-	F(0x2e, "", return -1)                                           \
-	F(0x2f, "", return -1)                                           \
-	F(0x30, "", return -1)                                           \
-	F(0x31, "LD SP, nn",                                             \
-			write_reg(SP, read_nn());                        \
-			set_lclock(12);                                  \
-			write_reg(PC, read_reg(PC)+3))                   \
-	F(0x32, "LD (HL), A",                                            \
-			write_mem(read_reg(HL), read_reg(A)-1);          \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0x33, "", return -1)                                           \
-	F(0x34, "", return -1)                                           \
-	F(0x35, "", return -1)                                           \
-	F(0x36, "", return -1)                                           \
-	F(0x37, "", return -1)                                           \
-	F(0x38, "", return -1)                                           \
-	F(0x39, "", return -1)                                           \
-	F(0x3a, "", return -1)                                           \
-	F(0x3b, "", return -1)                                           \
-	F(0x3c, "", return -1)                                           \
-	F(0x3d, "", return -1)                                           \
-	F(0x3e, "LD A, n",                                               \
-			write_reg(A, read_n());                          \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+2))                   \
-	F(0x3f, "", return -1)                                           \
-	F(0x40, "", return -1)                                           \
-	F(0x41, "", return -1)                                           \
-	F(0x42, "", return -1)                                           \
-	F(0x43, "", return -1)                                           \
-	F(0x44, "", return -1)                                           \
-	F(0x45, "", return -1)                                           \
-	F(0x46, "", return -1)                                           \
-	F(0x47, "", return -1)                                           \
-	F(0x48, "", return -1)                                           \
-	F(0x49, "", return -1)                                           \
-	F(0x4a, "", return -1)                                           \
-	F(0x4b, "", return -1)                                           \
-	F(0x4c, "", return -1)                                           \
-	F(0x4d, "", return -1)                                           \
-	F(0x4e, "", return -1)                                           \
-	F(0x4f, "", return -1)                                           \
-	F(0x50, "", return -1)                                           \
-	F(0x51, "", return -1)                                           \
-	F(0x52, "", return -1)                                           \
-	F(0x53, "", return -1)                                           \
-	F(0x54, "", return -1)                                           \
-	F(0x55, "", return -1)                                           \
-	F(0x56, "", return -1)                                           \
-	F(0x57, "", return -1)                                           \
-	F(0x58, "", return -1)                                           \
-	F(0x59, "", return -1)                                           \
-	F(0x5a, "", return -1)                                           \
-	F(0x5b, "", return -1)                                           \
-	F(0x5c, "", return -1)                                           \
-	F(0x5d, "", return -1)                                           \
-	F(0x5e, "", return -1)                                           \
-	F(0x5f, "", return -1)                                           \
-	F(0x60, "", return -1)                                           \
-	F(0x61, "", return -1)                                           \
-	F(0x62, "", return -1)                                           \
-	F(0x63, "", return -1)                                           \
-	F(0x64, "", return -1)                                           \
-	F(0x65, "", return -1)                                           \
-	F(0x66, "", return -1)                                           \
-	F(0x67, "", return -1)                                           \
-	F(0x68, "", return -1)                                           \
-	F(0x69, "", return -1)                                           \
-	F(0x6a, "", return -1)                                           \
-	F(0x6b, "", return -1)                                           \
-	F(0x6c, "", return -1)                                           \
-	F(0x6d, "", return -1)                                           \
-	F(0x6e, "", return -1)                                           \
-	F(0x6f, "", return -1)                                           \
-	F(0x70, "", return -1)                                           \
-	F(0x71, "", return -1)                                           \
-	F(0x72, "", return -1)                                           \
-	F(0x73, "", return -1)                                           \
-	F(0x74, "", return -1)                                           \
-	F(0x75, "", return -1)                                           \
-	F(0x76, "", return -1)                                           \
-	F(0x77, "", return -1)                                           \
-	F(0x78, "", return -1)                                           \
-	F(0x79, "", return -1)                                           \
-	F(0x7a, "", return -1)                                           \
-	F(0x7b, "", return -1)                                           \
-	F(0x7c, "LD A, H",                                               \
-			write_reg(A, read_reg(H));                       \
-			set_lclock(4);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0x7d, "", return -1)                                           \
-	F(0x7e, "", return -1)                                           \
-	F(0x7f, "", return -1)                                           \
-	F(0x80, "", return -1)                                           \
-	F(0x81, "", return -1)                                           \
-	F(0x82, "", return -1)                                           \
-	F(0x83, "", return -1)                                           \
-	F(0x84, "", return -1)                                           \
-	F(0x85, "", return -1)                                           \
-	F(0x86, "", return -1)                                           \
-	F(0x87, "", return -1)                                           \
-	F(0x88, "", return -1)                                           \
-	F(0x89, "", return -1)                                           \
-	F(0x8a, "", return -1)                                           \
-	F(0x8b, "", return -1)                                           \
-	F(0x8c, "", return -1)                                           \
-	F(0x8d, "", return -1)                                           \
-	F(0x8e, "", return -1)                                           \
-	F(0x8f, "", return -1)                                           \
-	F(0x90, "", return -1)                                           \
-	F(0x91, "", return -1)                                           \
-	F(0x92, "", return -1)                                           \
-	F(0x93, "", return -1)                                           \
-	F(0x94, "", return -1)                                           \
-	F(0x95, "", return -1)                                           \
-	F(0x96, "", return -1)                                           \
-	F(0x97, "", return -1)                                           \
-	F(0x98, "", return -1)                                           \
-	F(0x99, "", return -1)                                           \
-	F(0x9a, "", return -1)                                           \
-	F(0x9b, "", return -1)                                           \
-	F(0x9c, "", return -1)                                           \
-	F(0x9d, "", return -1)                                           \
-	F(0x9e, "", return -1)                                           \
-	F(0x9f, "SBC A. n",                                              \
-			int ncsum = read_reg(A) + read_f(fC);            \
-			write_reg(A, read_reg(A) - ncsum);               \
-			set_lclock(4);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0xa0, "", return -1)                                           \
-	F(0xa1, "", return -1)                                           \
-	F(0xa2, "", return -1)                                           \
-	F(0xa3, "", return -1)                                           \
-	F(0xa4, "", return -1)                                           \
-	F(0xa5, "", return -1)                                           \
-	F(0xa6, "", return -1)                                           \
-	F(0xa7, "", return -1)                                           \
-	F(0xa8, "", return -1)                                           \
-	F(0xa9, "", return -1)                                           \
-	F(0xaa, "", return -1)                                           \
-	F(0xab, "", return -1)                                           \
-	F(0xac, "", return -1)                                           \
-	F(0xad, "", return -1)                                           \
-	F(0xae, "", return -1)                                           \
-	F(0xaf, "XOR A",                                                 \
-			int result = read_reg(A) ^ read_reg(A);          \
-			write_reg(A, result);                            \
-			write_f(fZ, 1, result == 0);                     \
-			write_f(fN, 0, TRUE);                            \
-			write_f(fH, 0, TRUE);                            \
-			write_f(fC, 0, TRUE);                            \
-			set_lclock(4);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0xb0, "", return -1)                                           \
-	F(0xb1, "", return -1)                                           \
-	F(0xb2, "", return -1)                                           \
-	F(0xb3, "", return -1)                                           \
-	F(0xb4, "", return -1)                                           \
-	F(0xb5, "", return -1)                                           \
-	F(0xb6, "", return -1)                                           \
-	F(0xb7, "", return -1)                                           \
-	F(0xb8, "", return -1)                                           \
-	F(0xb9, "", return -1)                                           \
-	F(0xba, "", return -1)                                           \
-	F(0xbb, "", return -1)                                           \
-	F(0xbc, "", return -1)                                           \
-	F(0xbd, "", return -1)                                           \
-	F(0xbe, "", return -1)                                           \
-	F(0xbf, "", return -1)                                           \
-	F(0xc0, "", return -1)                                           \
-	F(0xc1, "", return -1)                                           \
-	F(0xc2, "", return -1)                                           \
-	F(0xc3, "", return -1)                                           \
-	F(0xc4, "", return -1)                                           \
-	F(0xc5, "", return -1)                                           \
-	F(0xc6, "", return -1)                                           \
-	F(0xc7, "", return -1)                                           \
-	F(0xc8, "", return -1)                                           \
-	F(0xc9, "", return -1)                                           \
-	F(0xca, "", return -1)                                           \
-	F(0xcb, "CB",                                                    \
-			return EXEC_CBP_INSTR(read_n()))                 \
-	F(0xcc, "", return -1)                                           \
-	F(0xcd, "", return -1)                                           \
-	F(0xce, "", return -1)                                           \
-	F(0xcf, "", return -1)                                           \
-	F(0xd0, "", return -1)                                           \
-	F(0xd1, "", return -1)                                           \
-	F(0xd2, "", return -1)                                           \
-	F(0xd3, "", return -1)                                           \
-	F(0xd4, "", return -1)                                           \
-	F(0xd5, "", return -1)                                           \
-	F(0xd6, "", return -1)                                           \
-	F(0xd7, "", return -1)                                           \
-	F(0xd8, "", return -1)                                           \
-	F(0xd9, "", return -1)                                           \
-	F(0xda, "", return -1)                                           \
-	F(0xdb, "", return -1)                                           \
-	F(0xdc, "", return -1)                                           \
-	F(0xdd, "", return -1)                                           \
-	F(0xde, "", return -1)                                           \
-	F(0xdf, "", return -1)                                           \
-	F(0xe0, "", return -1)                                           \
-	F(0xe1, "", return -1)                                           \
-	F(0xe2, "LD (C), A",                                             \
-			write_mem(0xFF00 + read_reg(C), read_reg(A));    \
-			set_lclock(8);                                   \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0xe3, "", return -1)                                           \
-	F(0xe4, "", return -1)                                           \
-	F(0xe5, "", return -1)                                           \
-	F(0xe6, "", return -1)                                           \
-	F(0xe7, "", return -1)                                           \
-	F(0xe8, "", return -1)                                           \
-	F(0xe9, "", return -1)                                           \
-	F(0xea, "", return -1)                                           \
-	F(0xeb, "", return -1)                                           \
-	F(0xec, "", return -1)                                           \
-	F(0xed, "", return -1)                                           \
-	F(0xee, "", return -1)                                           \
-	F(0xef, "", return -1)                                           \
-	F(0xf0, "", return -1)                                           \
-	F(0xf1, "", return -1)                                           \
-	F(0xf2, "", return -1)                                           \
-	F(0xf3, "", return -1)                                           \
-	F(0xf4, "", return -1)                                           \
-	F(0xf5, "", return -1)                                           \
-	F(0xf6, "", return -1)                                           \
-	F(0xf7, "", return -1)                                           \
-	F(0xf8, "", return -1)                                           \
-	F(0xf9, "", return -1)                                           \
-	F(0xfa, "", return -1)                                           \
-	F(0xfb, "EI",                                                    \
-			printf("Interrupts enabled. TODO: interrupts."); \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0xfc, "", return -1)                                           \
-	F(0xfd, "", return -1)                                           \
-	F(0xfe, "CP d8",                                                 \
-			int result = read_reg(A) - read_n();             \
-			write_f(fZ, 1, result == 0);                     \
-			write_f(fN, 1, TRUE);                            \
-			write_f(fH, 1, !if_borrow(4, result, 1));        \
-	 		write_f(fC, 1, result < 0);                      \
-			write_reg(PC, read_reg(PC)+1))                   \
-	F(0xff, "RST 38",                                                \
-			push(read_reg(PC));                              \
-			write_reg(PC, read_n());                         \
+/* TODO make cycles arg */
+/* TODO redo PC mutation */
+#define BASE_INSTR_TABLE(F)                                                   \
+	F(0x00, "NOP",                                                        \
+			asm("nop");                                           \
+			set_lclock(4);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x01, "LD BC, nn",                                                  \
+			write_reg(BC, read_nn());                             \
+			set_lclock(12);                                       \
+			write_reg(PC, read_reg(PC)+3))                        \
+	F(0x02, "LD (BC), A",                                                 \
+			write_reg(BC, read_reg(A));                           \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x03, "INC BC",                                                     \
+			write_reg(BC, read_reg(BC)+1);                        \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x04, "INC B",                                                      \
+			int b_orig = read_reg(B);                             \
+			int result = b_orig+1;                                \
+			write_reg(B, result);                                 \
+			write_f(fZ, 1, read_reg(B) == 0);                     \
+			write_f(fN, 0, TRUE);                                 \
+			write_f(fH, 1, if_carry(3, b_orig, 1));               \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x05, "DEC B FIXME",                                                \
+			int b_orig = read_reg(B);                             \
+			int result = b_orig-1;                                \
+			write_reg(B, result);                                 \
+			write_f(fZ, 1, result == 0);                          \
+			write_f(fN, 1, TRUE);                                 \
+			write_f(fH, 1, !if_borrow(4, b_orig, 1));             \
+			set_lclock(4);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x06, "LD B, n",                                                    \
+			write_reg(B, read_n());                               \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+2))                        \
+	F(0x07, "RLC A",                                                      \
+			int a_orig = read_reg(A);                             \
+			int result = lrotate(a_orig, 7);                      \
+			write_reg(A, result);                                 \
+			write_f(fC, a_orig & (1 << 7), TRUE);                 \
+			write_f(fZ, 1, result == 0);                          \
+			write_f(fN, 0, TRUE);                                 \
+			write_f(fH, 0, TRUE);                                 \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x08, "LD (nn), SP",                                                \
+			write_byte(mem, read_nn(), read_reg(SP));             \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+3))                        \
+	F(0x09, "", return -1)                                                \
+	F(0x0a, "", return -1)                                                \
+	F(0x0b, "", return -1)                                                \
+	F(0x0c, "INC C",                                                      \
+			int result = read_reg(C)+1;                           \
+			write_f(fZ, 1, result == 0);                          \
+			write_f(fN, 0, TRUE);                                 \
+			write_f(fH, 1, if_carry(3, read_reg(C), 1));          \
+			write_reg(PC, read_reg(PC)+1);                        \
+			set_lclock(4);                                        \
+			write_reg(C, result))                                 \
+	F(0x0d, "", return -1)                                                \
+	F(0x0e, "LD C, n",                                                    \
+			write_reg(C, read_n());                               \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+2))                        \
+	F(0x0f, "", return -1)                                                \
+	F(0x10, "", return -1)                                                \
+	F(0x11, "LD DE, nn",                                                  \
+			write_reg(DE, read_nn());                             \
+			set_lclock(12);                                       \
+			write_reg(PC, read_reg(PC)+3))                        \
+	F(0x12, "", return -1)                                                \
+	F(0x13, "INC DE",                                                     \
+			write_reg(DE, read_reg(DE)+1);                        \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x14, "", return -1)                                                \
+	F(0x15, "", return -1)                                                \
+	F(0x16, "", return -1)                                                \
+	F(0x17, "", return -1)                                                \
+	F(0x18, "", return -1)                                                \
+	F(0x19, "", return -1)                                                \
+	F(0x1a, "LD A, (DE)",                                                 \
+			write_reg(A, read_byte(mem, read_reg(DE)));           \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x1b, "", return -1)                                                \
+	F(0x1c, "", return -1)                                                \
+	F(0x1d, "", return -1)                                                \
+	F(0x1e, "", return -1)                                                \
+	F(0x1f, "", return -1)                                                \
+	F(0x20, "JR NZ, n",                                                   \
+			int n_addr = PC + read_n();                           \
+			if (read_f(fZ) == 0) write_reg(PC, n_addr);           \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x21, "LD HL, nn",                                                  \
+			write_reg(HL, read_nn());                             \
+			set_lclock(12);                                       \
+			write_reg(PC, read_reg(PC)+3))                        \
+	F(0x22, "", return -1)                                                \
+	F(0x23, "", return -1)                                                \
+	F(0x24, "", return -1)                                                \
+	F(0x25, "", return -1)                                                \
+	F(0x26, "", return -1)                                                \
+	F(0x27, "", return -1)                                                \
+	F(0x28, "", return -1)                                                \
+	F(0x29, "", return -1)                                                \
+	F(0x2a, "", return -1)                                                \
+	F(0x2b, "", return -1)                                                \
+	F(0x2c, "", return -1)                                                \
+	F(0x2d, "", return -1)                                                \
+	F(0x2e, "", return -1)                                                \
+	F(0x2f, "", return -1)                                                \
+	F(0x30, "", return -1)                                                \
+	F(0x31, "LD SP, nn",                                                  \
+			write_reg(SP, read_nn());                             \
+			set_lclock(12);                                       \
+			write_reg(PC, read_reg(PC)+3))                        \
+	F(0x32, "LD (HL), A",                                                 \
+			write_byte(mem, read_reg(HL), read_reg(A)-1);         \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x33, "", return -1)                                                \
+	F(0x34, "", return -1)                                                \
+	F(0x35, "", return -1)                                                \
+	F(0x36, "", return -1)                                                \
+	F(0x37, "", return -1)                                                \
+	F(0x38, "", return -1)                                                \
+	F(0x39, "", return -1)                                                \
+	F(0x3a, "", return -1)                                                \
+	F(0x3b, "", return -1)                                                \
+	F(0x3c, "", return -1)                                                \
+	F(0x3d, "", return -1)                                                \
+	F(0x3e, "LD A, n",                                                    \
+			write_reg(A, read_n());                               \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+2))                        \
+	F(0x3f, "", return -1)                                                \
+	F(0x40, "", return -1)                                                \
+	F(0x41, "", return -1)                                                \
+	F(0x42, "", return -1)                                                \
+	F(0x43, "", return -1)                                                \
+	F(0x44, "", return -1)                                                \
+	F(0x45, "", return -1)                                                \
+	F(0x46, "", return -1)                                                \
+	F(0x47, "", return -1)                                                \
+	F(0x48, "", return -1)                                                \
+	F(0x49, "", return -1)                                                \
+	F(0x4a, "", return -1)                                                \
+	F(0x4b, "", return -1)                                                \
+	F(0x4c, "", return -1)                                                \
+	F(0x4d, "", return -1)                                                \
+	F(0x4e, "", return -1)                                                \
+	F(0x4f, "", return -1)                                                \
+	F(0x50, "", return -1)                                                \
+	F(0x51, "", return -1)                                                \
+	F(0x52, "", return -1)                                                \
+	F(0x53, "", return -1)                                                \
+	F(0x54, "", return -1)                                                \
+	F(0x55, "", return -1)                                                \
+	F(0x56, "", return -1)                                                \
+	F(0x57, "", return -1)                                                \
+	F(0x58, "", return -1)                                                \
+	F(0x59, "", return -1)                                                \
+	F(0x5a, "", return -1)                                                \
+	F(0x5b, "", return -1)                                                \
+	F(0x5c, "", return -1)                                                \
+	F(0x5d, "", return -1)                                                \
+	F(0x5e, "", return -1)                                                \
+	F(0x5f, "", return -1)                                                \
+	F(0x60, "", return -1)                                                \
+	F(0x61, "", return -1)                                                \
+	F(0x62, "", return -1)                                                \
+	F(0x63, "", return -1)                                                \
+	F(0x64, "", return -1)                                                \
+	F(0x65, "", return -1)                                                \
+	F(0x66, "", return -1)                                                \
+	F(0x67, "", return -1)                                                \
+	F(0x68, "", return -1)                                                \
+	F(0x69, "", return -1)                                                \
+	F(0x6a, "", return -1)                                                \
+	F(0x6b, "LD L, E", \
+			write_reg(L, read_reg(E)); \
+			set_lclock(4); \
+			write_reg(PC, read_reg(PC)+1)) \
+	F(0x6c, "", return -1)                                                \
+	F(0x6d, "", return -1)                                                \
+	F(0x6e, "", return -1)                                                \
+	F(0x6f, "", return -1)                                                \
+	F(0x70, "", return -1)                                                \
+	F(0x71, "", return -1)                                                \
+	F(0x72, "", return -1)                                                \
+	F(0x73, "", return -1)                                                \
+	F(0x74, "", return -1)                                                \
+	F(0x75, "", return -1)                                                \
+	F(0x76, "", return -1)                                                \
+	F(0x77, "LD (HL), A",                                                 \
+			write_byte(mem, read_reg(HL), read_reg(A));           \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x78, "", return -1)                                                \
+	F(0x79, "", return -1)                                                \
+	F(0x7a, "", return -1)                                                \
+	F(0x7b, "", return -1)                                                \
+	F(0x7c, "LD A, H",                                                    \
+			write_reg(A, read_reg(H));                            \
+			set_lclock(4);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0x7d, "", return -1)                                                \
+	F(0x7e, "", return -1)                                                \
+	F(0x7f, "", return -1)                                                \
+	F(0x80, "", return -1)                                                \
+	F(0x81, "", return -1)                                                \
+	F(0x82, "", return -1)                                                \
+	F(0x83, "", return -1)                                                \
+	F(0x84, "", return -1)                                                \
+	F(0x85, "", return -1)                                                \
+	F(0x86, "", return -1)                                                \
+	F(0x87, "", return -1)                                                \
+	F(0x88, "", return -1)                                                \
+	F(0x89, "", return -1)                                                \
+	F(0x8a, "", return -1)                                                \
+	F(0x8b, "", return -1)                                                \
+	F(0x8c, "", return -1)                                                \
+	F(0x8d, "", return -1)                                                \
+	F(0x8e, "", return -1)                                                \
+	F(0x8f, "", return -1)                                                \
+	F(0x90, "", return -1)                                                \
+	F(0x91, "", return -1)                                                \
+	F(0x92, "", return -1)                                                \
+	F(0x93, "", return -1)                                                \
+	F(0x94, "", return -1)                                                \
+	F(0x95, "", return -1)                                                \
+	F(0x96, "", return -1)                                                \
+	F(0x97, "", return -1)                                                \
+	F(0x98, "", return -1)                                                \
+	F(0x99, "", return -1)                                                \
+	F(0x9a, "", return -1)                                                \
+	F(0x9b, "", return -1)                                                \
+	F(0x9c, "", return -1)                                                \
+	F(0x9d, "", return -1)                                                \
+	F(0x9e, "", return -1)                                                \
+	F(0x9f, "SBC A. n",                                                   \
+			int ncsum = read_reg(A) + read_f(fC);                 \
+			write_reg(A, read_reg(A) - ncsum);                    \
+			set_lclock(4);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0xa0, "", return -1)                                                \
+	F(0xa1, "", return -1)                                                \
+	F(0xa2, "", return -1)                                                \
+	F(0xa3, "", return -1)                                                \
+	F(0xa4, "", return -1)                                                \
+	F(0xa5, "", return -1)                                                \
+	F(0xa6, "", return -1)                                                \
+	F(0xa7, "", return -1)                                                \
+	F(0xa8, "", return -1)                                                \
+	F(0xa9, "", return -1)                                                \
+	F(0xaa, "", return -1)                                                \
+	F(0xab, "", return -1)                                                \
+	F(0xac, "", return -1)                                                \
+	F(0xad, "", return -1)                                                \
+	F(0xae, "", return -1)                                                \
+	F(0xaf, "XOR A",                                                      \
+			int result = read_reg(A) ^ read_reg(A);               \
+			write_reg(A, result);                                 \
+			write_f(fZ, 1, result == 0);                          \
+			write_f(fN, 0, TRUE);                                 \
+			write_f(fH, 0, TRUE);                                 \
+			write_f(fC, 0, TRUE);                                 \
+			set_lclock(4);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0xb0, "", return -1)                                                \
+	F(0xb1, "", return -1)                                                \
+	F(0xb2, "", return -1)                                                \
+	F(0xb3, "", return -1)                                                \
+	F(0xb4, "", return -1)                                                \
+	F(0xb5, "", return -1)                                                \
+	F(0xb6, "", return -1)                                                \
+	F(0xb7, "", return -1)                                                \
+	F(0xb8, "", return -1)                                                \
+	F(0xb9, "", return -1)                                                \
+	F(0xba, "", return -1)                                                \
+	F(0xbb, "", return -1)                                                \
+	F(0xbc, "", return -1)                                                \
+	F(0xbd, "", return -1)                                                \
+	F(0xbe, "CP (HL)",                                                    \
+			int result = read_byte(mem, read_reg(HL)) - read_n(); \
+			write_f(fZ, 1, result == 0);                          \
+			write_f(fN, 1, TRUE);                                 \
+			write_f(fH, 1, !if_borrow(4, result, 1));             \
+	 		write_f(fC, 1, result < 0);                           \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0xbf, "", return -1)                                                \
+	F(0xc0, "", return -1)                                                \
+	F(0xc1, "", return -1)                                                \
+	F(0xc2, "", return -1)                                                \
+	F(0xc3, "", return -1)                                                \
+	F(0xc4, "", return -1)                                                \
+	F(0xc5, "", return -1)                                                \
+	F(0xc6, "", return -1)                                                \
+	F(0xc7, "", return -1)                                                \
+	F(0xc8, "", return -1)                                                \
+	F(0xc9, "", return -1)                                                \
+	F(0xca, "", return -1)                                                \
+	F(0xcb, "CB",                                                         \
+			return EXEC_CBP_INSTR(read_n()))                      \
+	F(0xcc, "", return -1)                                                \
+	F(0xcd, "", return -1)                                                \
+	F(0xce, "", return -1)                                                \
+	F(0xcf, "", return -1)                                                \
+	F(0xd0, "", return -1)                                                \
+	F(0xd1, "", return -1)                                                \
+	F(0xd2, "", return -1)                                                \
+	F(0xd3, "", return -1)                                                \
+	F(0xd4, "", return -1)                                                \
+	F(0xd5, "", return -1)                                                \
+	F(0xd6, "", return -1)                                                \
+	F(0xd7, "", return -1)                                                \
+	F(0xd8, "", return -1)                                                \
+	F(0xd9, "", return -1)                                                \
+	F(0xda, "", return -1)                                                \
+	F(0xdb, "", return -1)                                                \
+	F(0xdc, "", return -1)                                                \
+	F(0xdd, "", return -1)                                                \
+	F(0xde, "", return -1)                                                \
+	F(0xdf, "", return -1)                                                \
+	F(0xe0, "LDH (n), A",                                                 \
+			write_byte(mem, 0xFF00+read_n(), read_reg(A));        \
+			set_lclock(12);                                       \
+			write_reg(PC, read_reg(PC)+2))                        \
+	F(0xe1, "", return -1)                                                \
+	F(0xe2, "LD (C), A",                                                  \
+			write_byte(mem, 0xFF00 + read_reg(C), read_reg(A));   \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0xe3, "", return -1)                                                \
+	F(0xe4, "", return -1)                                                \
+	F(0xe5, "PUSH HL",                                                    \
+			push(read_reg(HL));                                   \
+			set_lclock(16);                                       \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0xe6, "", return -1)                                                \
+	F(0xe7, "", return -1)                                                \
+	F(0xe8, "", return -1)                                                \
+	F(0xe9, "", return -1)                                                \
+	F(0xea, "", return -1)                                                \
+	F(0xeb, "", return -1)                                                \
+	F(0xec, "", return -1)                                                \
+	F(0xed, "", return -1)                                                \
+	F(0xee, "", return -1)                                                \
+	F(0xef, "", return -1)                                                \
+	F(0xf0, "", return -1)                                                \
+	F(0xf1, "", return -1)                                                \
+	F(0xf2, "", return -1)                                                \
+	F(0xf3, "", return -1)                                                \
+	F(0xf4, "", return -1)                                                \
+	F(0xf5, "", return -1)                                                \
+	F(0xf6, "", return -1)                                                \
+	F(0xf7, "", return -1)                                                \
+	F(0xf8, "", return -1)                                                \
+	F(0xf9, "", return -1)                                                \
+	F(0xfa, "", return -1)                                                \
+	F(0xfb, "EI",                                                         \
+			printf("Interrupts enabled. TODO: interrupts.");      \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0xfc, "", return -1)                                                \
+	F(0xfd, "", return -1)                                                \
+	F(0xfe, "CP d8",                                                      \
+			int result = read_reg(A) - read_n();                  \
+			write_f(fZ, 1, result == 0);                          \
+			write_f(fN, 1, TRUE);                                 \
+			write_f(fH, 1, !if_borrow(4, result, 1));             \
+	 		write_f(fC, 1, result < 0);                           \
+			write_reg(PC, read_reg(PC)+1))                        \
+	F(0xff, "RST 38",                                                     \
+			push(read_reg(PC));                                   \
+			write_reg(PC, read_n());                              \
 			write_reg(PC, read_reg(PC)+1))
 
 #define BASE_INSTR_FUNCS(OP, INAME, CMDS) int exec_base##OP() { CMDS; return 0; }

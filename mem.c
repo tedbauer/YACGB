@@ -59,7 +59,7 @@ void cleanup_mem(mem_state_t* mem) {
 	free(mem);
 }
 
-int read_byte(mem_state_t* mem, int addr) {
+int* read_ptr(mem_state_t* mem, int addr) {
 
 	// ROM bank 0
 	if IN_RANGE(addr, 0x0000, 0x3FFF) {
@@ -67,24 +67,35 @@ int read_byte(mem_state_t* mem, int addr) {
 		// BIOS
 		if IN_RANGE(addr, 0x0000, 0x00FF) {
 			if (mem->bios_stat) {
-				printf("Read %x from BIOS.\n", mem->bios[addr]);
-				return mem->bios[addr];
+				return &mem->bios[addr];
 			}
 		} else {
-			return mem->rom_bank0[addr];
+			return &mem->rom_bank0[addr];
 		}
 	}
 
 	// ROM bank 1
 	else if IN_RANGE(addr, 0x4000, 0x7FFF) {
-		return mem->rom_bank1[addr - 0x4000];
+		return &mem->rom_bank1[addr - 0x4000];
 	}
 
 	// Graphics RAM
 	else if IN_RANGE(addr, 0x8000, 0x9FFF) {
-		return mem->gpu_vram[addr - 0x8000];
+		return &mem->gpu_vram[addr - 0x8000];
 	}
+
 
 }
 
-char* write_byte(mem_state_t* mem, uint8_t addr, uint8_t val);
+int read_byte(mem_state_t* mem, int addr) {
+	int* mem_ptr = read_ptr(mem, addr);
+	printf("Read %x from BIOS.\n", *mem_ptr);
+	return *mem_ptr;
+}
+
+int write_byte(mem_state_t* mem, int addr, int val) {
+	int* mem_ptr = read_ptr(mem, addr);
+	printf("Wrote %#x to address %#x.\n", val, *mem_ptr);
+	*mem_ptr = val;
+	return 0;
+}
