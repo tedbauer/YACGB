@@ -140,10 +140,11 @@ int read_byte(mem_state_t* mem, int addr) {
 }
 
 int write_byte(mem_state_t* mem, int addr, int val) {
-	int* mem_ptr = read_ptr(mem, addr);
+	int* mem_ptr  = read_ptr(mem, addr);
+	int sized_val = val & 0xFFFF;
 #ifdef DEBUG
-	printf("[Wrote %#06x]\n", val);
+	printf("[Wrote %#06x]\n", sized_val);
 #endif
-	*mem_ptr = val;
+	*mem_ptr = sized_val;
 	return 0;
 }

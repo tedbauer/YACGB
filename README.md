@@ -5,6 +5,7 @@ Yet another C GB emulator!
 ## Building
 
 - `make`: Build & run
+- `make debug`: Build & run with debugging output
 - `make emu`: Create binary executable `emu`
 - `make clean`: Clean up build stuff and executable
 
