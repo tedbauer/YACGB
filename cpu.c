@@ -73,6 +73,8 @@ void write_reg(reg_t r, int new_val) {
 	}
 }
 
+#define ADV_PC(count) write_reg(PC, read_reg(PC)+count)
+
 int read_reg(reg_t r) {
 	int result = 0;
 	switch(r) {
@@ -482,16 +484,16 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 #define BASE_INSTR_TABLE(F)                                                   \
 	F(0x00, 4, "NOP",                                                     \
 			asm("nop");                                           \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x01, 12, "LD BC, nn",                                              \
 			write_reg(BC, read_nn());                             \
-			write_reg(PC, read_reg(PC)+3))                        \
+			ADV_PC(3))                                            \
 	F(0x02, 8, "LD (BC), A",                                              \
 			write_reg(BC, read_reg(A));                           \
-			write_reg(PC, read_reg(PC)+1))                        \
-	F(0x03, 8, "INC BC",                                                 \
+			ADV_PC(1))                                            \
+	F(0x03, 8, "INC BC",                                                  \
 			write_reg(BC, read_reg(BC)+1);                        \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x04, 8, "INC B",                                                   \
 			int b_orig = read_reg(B);                             \
 			int result = b_orig+1;                                \
@@ -499,7 +501,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_f(fZ, 1, read_reg(B) == 0);                     \
 			write_f(fN, 0, TRUE);                                 \
 			write_f(fH, 1, if_carry(3, b_orig, 1));               \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x05, 4, "DEC B FIXME",                                             \
 			int b_orig = read_reg(B);                             \
 			int result = b_orig-1;                                \
@@ -507,10 +509,10 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_f(fZ, 1, result == 0);                          \
 			write_f(fN, 1, TRUE);                                 \
 			write_f(fH, 1, !if_borrow(4, b_orig, 1));             \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x06, 8, "LD B, n",                                                 \
 			write_reg(B, read_n());                               \
-			write_reg(PC, read_reg(PC)+2))                        \
+			ADV_PC(2))                                            \
 	F(0x07, 4, "RLC A", /*FIXME fix clocks */                             \
 			int a_orig = read_reg(A);                             \
 			int result = lrotate(a_orig, 7);                      \
@@ -519,10 +521,10 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_f(fZ, 1, result == 0);                          \
 			write_f(fN, 0, TRUE);                                 \
 			write_f(fH, 0, TRUE);                                 \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x08, 8, "LD (nn), SP",                                             \
 			write_byte(mem, read_nn(), read_reg(SP));             \
-			write_reg(PC, read_reg(PC)+3))                        \
+			ADV_PC(3))                                            \
 	F(0x09, 0, "", return -1)                                             \
 	F(0x0a, 0, "", return -1)                                             \
 	F(0x0b, 0, "", return -1)                                             \
@@ -531,21 +533,21 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_f(fZ, 1, result == 0);                          \
 			write_f(fN, 0, TRUE);                                 \
 			write_f(fH, 1, if_carry(3, read_reg(C), 1));          \
-			write_reg(PC, read_reg(PC)+1);                        \
-			write_reg(C, result))                                 \
+			write_reg(C, result);                                 \
+			ADV_PC(1))                                            \
 	F(0x0d, 0, "", return -1)                                             \
 	F(0x0e, 8, "LD C, n",                                                 \
 			write_reg(C, read_n());                               \
-			write_reg(PC, read_reg(PC)+2))                        \
+			ADV_PC(2))                                            \
 	F(0x0f, 0, "", return -1)                                             \
 	F(0x10, 0, "", return -1)                                             \
 	F(0x11, 12, "LD DE, nn",                                              \
 			write_reg(DE, read_nn());                             \
-			write_reg(PC, read_reg(PC)+3))                        \
+			ADV_PC(3))                                            \
 	F(0x12, 0, "", return -1)                                             \
 	F(0x13, 8, "INC DE",                                                  \
 			write_reg(DE, read_reg(DE)+1);                        \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x14, 0, "", return -1)                                             \
 	F(0x15, 0, "", return -1)                                             \
 	F(0x16, 0, "", return -1)                                             \
@@ -554,7 +556,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x19, 0, "", return -1)                                             \
 	F(0x1a, 8, "LD A, (DE)",                                              \
 			write_reg(A, read_byte(mem, read_reg(DE)));           \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x1b, 0, "", return -1)                                             \
 	F(0x1c, 0, "", return -1)                                             \
 	F(0x1d, 0, "", return -1)                                             \
@@ -563,14 +565,14 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x20, 8, "JR NZ, n",                                                \
 			int n_addr = PC + read_n();                           \
 			if (read_f(fZ) == 0) write_reg(PC, n_addr);           \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x21, 12, "LD HL, nn",                                              \
 			write_reg(HL, read_nn());                             \
-			write_reg(PC, read_reg(PC)+3))                        \
+			ADV_PC(3))                                            \
 	F(0x22, 0, "", return -1)                                             \
 	F(0x23, 8, "INC HL",                                                  \
 			write_reg(HL, read_reg(HL)+1);                        \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x24, 0, "", return -1)                                             \
 	F(0x25, 0, "", return -1)                                             \
 	F(0x26, 0, "", return -1)                                             \
@@ -586,10 +588,10 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x30, 0, "", return -1)                                             \
 	F(0x31, 12, "LD SP, nn",                                              \
 			write_reg(SP, read_nn());                             \
-			write_reg(PC, read_reg(PC)+3))                        \
+			ADV_PC(3))                                            \
 	F(0x32, 8, "LD (HL), A",                                              \
 			write_byte(mem, read_reg(HL), read_reg(A)-1);         \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x33, 0, "", return -1)                                             \
 	F(0x34, 12, "INC (HL)",                                               \
 			int result = read_byte(mem, read_reg(HL))+1;          \
@@ -597,7 +599,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_f(fN, 0, TRUE);                                 \
 			write_f(fH, 1, if_carry(1, 1, 1));                    \
 			write_byte(mem, read_reg(HL), result);                \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x35, 0, "", return -1)                                             \
 	F(0x36, 0, "", return -1)                                             \
 	F(0x37, 0, "", return -1)                                             \
@@ -609,7 +611,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x3d, 0, "", return -1)                                             \
 	F(0x3e, 8, "LD A, n",                                                 \
 			write_reg(A, read_n());                               \
-			write_reg(PC, read_reg(PC)+2))                        \
+			ADV_PC(2))                                            \
 	F(0x3f, 0, "", return -1)                                             \
 	F(0x40, 0, "", return -1)                                             \
 	F(0x41, 0, "", return -1)                                             \
@@ -656,7 +658,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x6a, 0, "", return -1)                                             \
 	F(0x6b, 4, "LD L, E",                                                 \
 			write_reg(L, read_reg(E));                            \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x6c, 0, "", return -1)                                             \
 	F(0x6d, 0, "", return -1)                                             \
 	F(0x6e, 0, "", return -1)                                             \
@@ -670,17 +672,17 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x76, 0, "", return -1)                                             \
 	F(0x77, 8, "LD (HL), A",                                              \
 			write_byte(mem, read_reg(HL), read_reg(A));           \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x78, 0, "", return -1)                                             \
 	F(0x79, 0, "", return -1)                                             \
 	F(0x7a, 0, "", return -1)                                             \
 	F(0x7b, 0, "", return -1)                                             \
 	F(0x7c, 4, "LD A, H",                                                 \
 			write_reg(A, read_reg(H));                            \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x7d, 4, "LD A, L",                                                 \
 			write_reg(A, read_reg(L));                            \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0x7e, 0, "", return -1)                                             \
 	F(0x7f, 0, "", return -1)                                             \
 	F(0x80, 0, "", return -1)                                             \
@@ -717,7 +719,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x9f, 4, "SBC A. n",                                                \
 			int ncsum = read_reg(A) + read_f(fC);                 \
 			write_reg(A, read_reg(A) - ncsum);                    \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0xa0, 0, "", return -1)                                             \
 	F(0xa1, 0, "", return -1)                                             \
 	F(0xa2, 0, "", return -1)                                             \
@@ -740,7 +742,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_f(fN, 0, TRUE);                                 \
 			write_f(fH, 0, TRUE);                                 \
 			write_f(fC, 0, TRUE);                                 \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0xb0, 0, "", return -1)                                             \
 	F(0xb1, 0, "", return -1)                                             \
 	F(0xb2, 0, "", return -1)                                             \
@@ -761,7 +763,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_f(fN, 1, TRUE);                                 \
 			write_f(fH, 1, !if_borrow(4, result, 1));             \
 	 		write_f(fC, 1, result < 0);                           \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0xbf, 0, "", return -1)                                             \
 	F(0xc0, 0, "", return -1)                                             \
 	F(0xc1, 0, "", return -1)                                             \
@@ -774,7 +776,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0xc8, 0, "", return -1)                                             \
 	F(0xc9, 0, "", return -1)                                             \
 	F(0xca, 0, "", return -1)                                             \
-	F(0xcb, 0, "CB", /* FIXME cycles?*/                                      \
+	F(0xcb, 0, "CB", /* FIXME cycles?*/                                   \
 			return EXEC_CBP_INSTR(read_n()))                      \
 	F(0xcc, 0, "", return -1)                                             \
 	F(0xcd, 0, "", return -1)                                             \
@@ -798,16 +800,16 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0xdf, 0, "", return -1)                                             \
 	F(0xe0, 12, "LDH (n), A",                                             \
 			write_byte(mem, 0xFF00+read_n(), read_reg(A));        \
-			write_reg(PC, read_reg(PC)+2))                        \
+			ADV_PC(2))                                            \
 	F(0xe1, 0, "", return -1)                                             \
 	F(0xe2, 8, "LD (C), A",                                               \
 			write_byte(mem, 0xFF00 + read_reg(C), read_reg(A));   \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0xe3, 0, "", return -1)                                             \
 	F(0xe4, 0, "", return -1)                                             \
 	F(0xe5, 16, "PUSH HL",                                                \
 			push(read_reg(HL));                                   \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0xe6, 0, "", return -1)                                             \
 	F(0xe7, 0, "", return -1)                                             \
 	F(0xe8, 0, "", return -1)                                             \
@@ -831,7 +833,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0xfa, 0, "", return -1)                                             \
 	F(0xfb, 0, "EI", /*FIXME: cycles?*/                                   \
 			printf("Interrupts enabled. TODO: interrupts.");      \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0xfc, 0, "", return -1)                                             \
 	F(0xfd, 0, "", return -1)                                             \
 	F(0xfe, 0, "CP d8", /* FIXME: cycles */                               \
@@ -840,11 +842,11 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_f(fN, 1, TRUE);                                 \
 			write_f(fH, 1, !if_borrow(4, result, 1));             \
 	 		write_f(fC, 1, result < 0);                           \
-			write_reg(PC, read_reg(PC)+1))                        \
+			ADV_PC(1))                                            \
 	F(0xff, 0, "RST 38", /*FIXME cycles */                                \
 			push(read_reg(PC));                                   \
 			write_reg(PC, read_n());                              \
-			write_reg(PC, read_reg(PC)+1))
+			ADV_PC(1))
 
 #define BASE_INSTR_STRUCTS(OP, CYCLES, INAME, CMDS)  { .iname=INAME, .ifunc=exec_base##OP, .cycles=CYCLES },
 #define BASE_INSTR_FUNCS(OP, CYCLES, INAME, CMDS) int exec_base##OP() { CMDS; set_lclock(CYCLES); return 0; }
