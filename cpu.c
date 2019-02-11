@@ -8,6 +8,9 @@
 #define TRUE  1
 #define FALSE 0
 
+#define SIZE_16(val) (val >= 0x0000 && val <= 0xFFFF)
+#define SIZE_8(val)  (val >= 0x00 && val <= 0xFF)
+
 typedef enum {
 	/* 16 bit registers: */
 	PC=0, SP=1,
@@ -39,19 +42,34 @@ mem_state_t* mem;
 void write_reg(reg_t r, int new_val) {
 	switch(r) {
 		case AF:
+			assert(SIZE_16(new_val));
 			write_reg(A, new_val & 0xFF);
-			write_reg(F, new_val & 0xFF00);
+			write_reg(F, new_val >> 8);
+			break;
 		case BC:
+			assert(SIZE_16(new_val));
 			write_reg(B, new_val & 0xFF);
-			write_reg(C, new_val & 0xFF00);
+			write_reg(C, new_val >> 8);
+			break;
 		case DE:
+			assert(SIZE_16(new_val));
 			write_reg(D, new_val & 0xFF);
-			write_reg(E, new_val & 0xFF00);
+			write_reg(E, new_val >> 8);
+			break;
 		case HL:
+			assert(SIZE_16(new_val));
 			write_reg(H, new_val & 0xFF);
-			write_reg(H, new_val & 0xFF00);
-		default:
+			write_reg(H, new_val >> 8);
+			break;
+		case PC: case SP:
+			assert(SIZE_16(new_val));
 			cpu->registers[r] = new_val;
+			break;
+		case A: case B: case C: case D: case E:
+		case F: case H: case L:
+			printf("The reg is %d. val is: %#06x\n", r, new_val);
+			assert(SIZE_8(new_val));
+			cpu->registers[r] = (new_val & 0xFF);
 	}
 }
 
@@ -61,15 +79,19 @@ int read_reg(reg_t r) {
 		case AF:
 			result |= read_reg(A);
 			result |= (read_reg(F) << 8);
+			break;
 		case BC:
 			result |= read_reg(B);
 			result |= (read_reg(C) << 8);
+			break;
 		case DE:
 			result |= read_reg(D);
 			result |= (read_reg(E) << 8);
+			break;
 		case HL:
 			result |= read_reg(H);
 			result |= (read_reg(L) << 8);
+			break;
 		default:
 			return cpu->registers[r];
 	}
@@ -93,7 +115,9 @@ int lrotate(int val, int bound) {
 
 void write_f(flag_t f, int val, int guard) {
 	if (guard) {
-		write_reg(F, read_reg(F) | (1 << (4 - f)));
+		int result = read_reg(F) | (1 << (4 - f));
+		printf("Result is: %#06x.\n", result);
+		write_reg(F, result);
 	}
 }
 
@@ -123,7 +147,21 @@ void set_lclock(int lclock) {
 int init_cpu(mem_state_t* new_mem) {
 	mem = new_mem;
 	cpu  = malloc(sizeof(cpu_state_t)); /* FIXME: can you do this? */
+
+	/* Zero out 16bit registers */
+	write_reg(PC, 0x0000);
 	write_reg(SP, 0x0000);
+
+	/* Zero out 8bit registers */
+	write_reg(A, 0x00);
+	write_reg(B, 0x00);
+	write_reg(C, 0x00);
+	write_reg(D, 0x00);
+	write_reg(E, 0x00);
+	write_reg(F, 0x00);
+	write_reg(H, 0x00);
+	write_reg(L, 0x00);
+
 	return 0;
 }
 
@@ -544,7 +582,10 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			set_lclock(12);                                       \
 			write_reg(PC, read_reg(PC)+3))                        \
 	F(0x22, "", return -1)                                                \
-	F(0x23, "", return -1)                                                \
+	F(0x23, "INC HL",                                                     \
+			write_reg(HL, read_reg(HL)+1);                        \
+			set_lclock(8);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
 	F(0x24, "", return -1)                                                \
 	F(0x25, "", return -1)                                                \
 	F(0x26, "", return -1)                                                \
@@ -567,7 +608,14 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			set_lclock(8);                                        \
 			write_reg(PC, read_reg(PC)+1))                        \
 	F(0x33, "", return -1)                                                \
-	F(0x34, "", return -1)                                                \
+	F(0x34, "INC (HL)", \
+			int result = read_byte(mem, read_reg(HL))+1; \
+			write_f(fZ, 1, result == 0); \
+			write_f(fN, 0, TRUE); \
+			write_f(fH, 1, if_carry(1, 1, 1)); \
+			set_lclock(12); \
+			write_byte(mem, read_reg(HL), result); \
+			write_reg(PC, read_reg(PC)+1)) \
 	F(0x35, "", return -1)                                                \
 	F(0x36, "", return -1)                                                \
 	F(0x37, "", return -1)                                                \
@@ -625,10 +673,10 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x68, "", return -1)                                                \
 	F(0x69, "", return -1)                                                \
 	F(0x6a, "", return -1)                                                \
-	F(0x6b, "LD L, E", \
-			write_reg(L, read_reg(E)); \
-			set_lclock(4); \
-			write_reg(PC, read_reg(PC)+1)) \
+	F(0x6b, "LD L, E",                                                    \
+			write_reg(L, read_reg(E));                            \
+			set_lclock(4);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
 	F(0x6c, "", return -1)                                                \
 	F(0x6d, "", return -1)                                                \
 	F(0x6e, "", return -1)                                                \
@@ -652,7 +700,10 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_reg(A, read_reg(H));                            \
 			set_lclock(4);                                        \
 			write_reg(PC, read_reg(PC)+1))                        \
-	F(0x7d, "", return -1)                                                \
+	F(0x7d, "LD A, L",                                                    \
+			write_reg(A, read_reg(L));                            \
+			set_lclock(4);                                        \
+			write_reg(PC, read_reg(PC)+1))                        \
 	F(0x7e, "", return -1)                                                \
 	F(0x7f, "", return -1)                                                \
 	F(0x80, "", return -1)                                                \
