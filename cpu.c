@@ -63,11 +63,11 @@ void write_reg(reg_t r, int new_val) {
 			break;
 		case PC: case SP:
 			assert(SIZE_16(new_val));
+			printf("Writing %#06x to reg.\n", new_val);
 			cpu->registers[r] = new_val;
 			break;
 		case A: case B: case C: case D: case E:
 		case F: case H: case L:
-			printf("The reg is %d. val is: %#06x\n", r, new_val);
 			assert(SIZE_8(new_val));
 			cpu->registers[r] = (new_val & 0xFF);
 	}
@@ -118,7 +118,6 @@ int lrotate(int val, int bound) {
 void write_f(flag_t f, int val, int guard) {
 	if (guard) {
 		int result = read_reg(F) | (1 << (4 - f));
-		printf("Result is: %#06x.\n", result);
 		write_reg(F, result);
 	}
 }
@@ -185,21 +184,21 @@ int pop() {
 }
 
 void pp_regs() {
-	printf("-- Register Status --\n");
-	printf("PC: %#06x\n", read_reg(PC));
-	printf("SP: %#06x\n", read_reg(SP));
-	printf("A : %#06x\n", read_reg(A));
-	printf("B : %#06x\n", read_reg(B));
-	printf("C : %#06x\n", read_reg(C));
-	printf("D : %#06x\n", read_reg(D));
-	printf("E : %#06x\n", read_reg(E));
-	printf("F : %#06x\n", read_reg(F));
-	printf("H : %#06x\n", read_reg(H));
-	printf("L : %#06x\n", read_reg(L));
-	printf("AF: %#06x\n", read_reg(AF));
-	printf("BC: %#06x\n", read_reg(BC));
-	printf("DE: %#06x\n", read_reg(DE));
-	printf("HL: %#06x\n", read_reg(HL));
+	printf("REGISTERS:\n");
+	printf("[PC: %#06x]", read_reg(PC));
+	printf("[SP: %#06x]", read_reg(SP));
+	printf("[A : %#06x]", read_reg(A));
+	printf("[B : %#06x]\n", read_reg(B));
+	printf("[C : %#06x]", read_reg(C));
+	printf("[D : %#06x]", read_reg(D));
+	printf("[E : %#06x]", read_reg(E));
+	printf("[F : %#06x]\n", read_reg(F));
+	printf("[H : %#06x]", read_reg(H));
+	printf("[L : %#06x]", read_reg(L));
+	printf("[AF: %#06x]", read_reg(AF));
+	printf("[BC: %#06x]\n", read_reg(BC));
+	printf("[DE: %#06x]", read_reg(DE));
+	printf("[HL: %#06x]\n", read_reg(HL));
 }
 
 typedef struct {
@@ -860,11 +859,18 @@ instr_t base_instrs[] = { BASE_INSTR_TABLE(BASE_INSTR_STRUCTS) };
 int step_cpu() {
 	int pc = read_reg(PC);
 	int instr = read_byte(mem, pc);
-	printf("Executing \"%s\" [%#x]. PC is %d. \n", PP_INSTR(instr), instr, pc);
+#ifdef DEBUG
+	printf("-----------------------\n");
+	printf("INSTR: \"%s\" [%#x]\n", PP_INSTR(instr), instr, pc);
+#endif
+
 	if (EXEC_BASE_INSTR(instr)) {
 		printf("Error: unimplemented instruction.\n");
 		return -1;
 	};
+#ifdef DEBUG
 	pp_regs();
+	printf("-----------------------\n");
+#endif
 	return 0;
 }

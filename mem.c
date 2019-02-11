@@ -62,6 +62,10 @@ void cleanup_mem(mem_state_t* mem) {
 
 int* read_ptr(mem_state_t* mem, int addr) {
 
+#ifdef DEBUG
+	printf("ACCESS MEMADDR: %#06x ");
+#endif
+
 	assert(IN_RANGE(addr, 0x0000, 0xFFFF));
 
 	// ROM bank 0
@@ -69,6 +73,9 @@ int* read_ptr(mem_state_t* mem, int addr) {
 
 		// BIOS
 		if (IN_RANGE(addr, 0x0000, 0x00FF) && mem->bios_stat) {
+#ifdef DEBUG
+			printf("[BIOS]");
+#endif
 			return &mem->bios[addr];
 		} else {
 			return &mem->rom_bank0[addr];
@@ -126,13 +133,17 @@ int* read_ptr(mem_state_t* mem, int addr) {
 
 int read_byte(mem_state_t* mem, int addr) {
 	int* mem_ptr = read_ptr(mem, addr);
-	printf("Read %x from BIOS.\n", *mem_ptr);
+#ifdef DEBUG
+	printf("[Read %#06x]\n", *mem_ptr);
+#endif
 	return *mem_ptr;
 }
 
 int write_byte(mem_state_t* mem, int addr, int val) {
 	int* mem_ptr = read_ptr(mem, addr);
-	printf("Wrote %#x to address %#x.\n", val, *mem_ptr);
+#ifdef DEBUG
+	printf("[Wrote %#06x]\n", val);
+#endif
 	*mem_ptr = val;
 	return 0;
 }

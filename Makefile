@@ -5,6 +5,9 @@ CFLAGS = -g -Wall
 
 all: run
 
+debug: CFLAGS += -DDEBUG
+debug: run
+
 run: emu
 	./emu
 
