@@ -17,6 +17,7 @@ Yet another C GB emulator!
 - [ ] ROM parser
 - [ ] Graphics subsystem
 - [ ] Fancy debugger
+- [ ] Game Link Cable
 - [ ] Other stuff
 
 ## Helpful Resources
