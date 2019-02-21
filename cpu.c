@@ -637,7 +637,9 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x4c, 0, "", return -1)                                           \
 	F(0x4d, 0, "", return -1)                                           \
 	F(0x4e, 0, "", return -1)                                           \
-	F(0x4f, 0, "", return -1)                                           \
+	F(0x4f, 4, "LD C, A",                                               \
+			write_reg(C, read_reg(A));                          \
+			ADV_PC(1))                                          \
 	F(0x50, 0, "", return -1)                                           \
 	F(0x51, 0, "", return -1)                                           \
 	F(0x52, 0, "", return -1)                                           \
@@ -780,7 +782,9 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0xc2, 0, "", return -1)                                           \
 	F(0xc3, 0, "", return -1)                                           \
 	F(0xc4, 0, "", return -1)                                           \
-	F(0xc5, 0, "", return -1)                                           \
+	F(0xc5, 16, "PUSH BC",                                              \
+			push(read_reg(BC));                                 \
+			ADV_PC(1))                                          \
 	F(0xc6, 0, "", return -1)                                           \
 	F(0xc7, 0, "", return -1)                                           \
 	F(0xc8, 0, "", return -1)                                           \
@@ -789,7 +793,9 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0xcb, 4, "CB",                                                    \
 			return EXEC_CBP_INSTR(read_n()))                    \
 	F(0xcc, 0, "", return -1)                                           \
-	F(0xcd, 0, "", return -1)                                           \
+	F(0xcd, 12, "CALL nn",                                              \
+			push(read_reg(PC)+3);                               \
+			write_reg(PC, read_nn()))                           \
 	F(0xce, 0, "", return -1)                                           \
 	F(0xcf, 0, "", return -1)                                           \
 	F(0xd0, 0, "", return -1)                                           \
