@@ -11,6 +11,8 @@
 #define SIZE_16(val) (val >= 0x0000 && val <= 0xFFFF)
 #define SIZE_8(val)  (val >= 0x00 && val <= 0xFF)
 
+#define SET_BIT(num, bit, x) (num | (x << bit))
+
 typedef enum {
 	/* 16 bit registers: */
 	PC=0, SP=1,
@@ -112,16 +114,16 @@ int lrotate(int val, int bound) {
 	return (val << 1) | (val & (1 << bound));
 }
 
-
 void write_f(flag_t f, int val, int guard) {
 	if (guard) {
-		int result = read_reg(F) | (1 << (4 - f));
+		int bit    = 4 - f;
+		int result = (read_reg(F) & ~(1UL << bit)) | (val << bit);
 		write_reg(F, result);
 	}
 }
 
 int read_f(flag_t f) {
-	return (read_reg(F) & (1 << (4 - f)));
+	return (read_reg(F) & (1UL << (4 - f)));
 }
 
 int read_nn() {
@@ -135,6 +137,7 @@ int read_nn() {
 	return result;
 }
 
+/** Return the byte contained in the address PC+1. */
 int read_n() {
 	return read_byte(mem, read_reg(PC)+1);
 }
@@ -202,14 +205,17 @@ void pp_regs() {
 void pp_flags() {
 	printf("FLAGS: ");
 	printf("[Z: %d][N: %d][H: %d][C: %d]\n",
-			read_f(fZ), read_f(fN),
-			read_f(fH), read_f(fC));
+			read_f(fZ) ? 1 : 0,
+			read_f(fN) ? 1 : 0,
+			read_f(fH) ? 1 : 0,
+			read_f(fC) ? 1 : 0);
 }
 
+/* Holds information about each instruction. */
 typedef struct {
-	char* iname;
-	int (*ifunc)(void);
-	int cycles;
+	char* iname; /* Instruction name (e.g. 'XOR A') */
+	int (*ifunc)(void); /* Internal function pointer */
+	int cycles; /* How many cycles execute with this instruction */
 } instr_t;
 
 #define CBP_INSTR_TABLE(F)                                            \
@@ -338,7 +344,8 @@ typedef struct {
 	F(0x7a, return -1)                                            \
 	F(0x7b, return -1)                                            \
 	F(0x7c, /* BIT 7, H */                                        \
-			write_f(fZ, 1, 1 & ((1 << 7) | read_reg(H))); \
+			printf("y this not execute\n"); \
+			write_f(fZ, 1, 1 & ((1 << 7) & read_reg(H))); \
 			write_f(fN, 0, TRUE);                         \
 			write_f(fH, 1, TRUE);                         \
 			write_reg(PC, read_reg(PC)+2))                \
@@ -851,8 +858,10 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 			write_reg(PC, read_n());                            \
 			ADV_PC(1))
 
-#define BASE_INSTR_STRUCTS(OP, CYCLES, INAME, CMDS)  { .iname=INAME, .ifunc=exec_base##OP, .cycles=CYCLES },
-#define BASE_INSTR_FUNCS(OP, CYCLES, INAME, CMDS) int exec_base##OP() { CMDS; set_lclock(CYCLES); return 0; }
+#define BASE_INSTR_STRUCTS(OP, CYCLES, INAME, CMDS) \
+	{ .iname=INAME, .ifunc=exec_base##OP, .cycles=CYCLES },
+#define BASE_INSTR_FUNCS(OP, CYCLES, INAME, CMDS) \
+	int exec_base##OP() { CMDS; set_lclock(CYCLES); return 0; }
 
 BASE_INSTR_TABLE(BASE_INSTR_FUNCS)
 instr_t base_instrs[] = { BASE_INSTR_TABLE(BASE_INSTR_STRUCTS) };
