@@ -236,7 +236,9 @@ typedef struct {
 	F(0x0e, return -1)                                            \
 	F(0x0f, return -1)                                            \
 	F(0x10, return -1)                                            \
-	F(0x11, return -1)                                            \
+	F(0x11, /* RL C */                                            \
+			write_reg(C, lrotate(read_reg(C), 8));        \
+			ADV_PC(1))                                    \
 	F(0x12, return -1)                                            \
 	F(0x13, return -1)                                            \
 	F(0x14, return -1)                                            \
@@ -344,7 +346,7 @@ typedef struct {
 	F(0x7a, return -1)                                            \
 	F(0x7b, return -1)                                            \
 	F(0x7c, /* BIT 7, H */                                        \
-			printf("y this not execute\n"); \
+			printf("y this not execute                    \ n"); \
 			write_f(fZ, 1, 1 & ((1 << 7) & read_reg(H))); \
 			write_f(fN, 0, TRUE);                         \
 			write_f(fH, 1, TRUE);                         \
@@ -578,7 +580,9 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0x21, 12, "LD HL, nn",                                            \
 			write_reg(HL, read_nn());                           \
 			ADV_PC(3))                                          \
-	F(0x22, 0, "", return -1)                                           \
+	F(0x22, 8, "LD (HL+), A",                                           \
+			write_byte(mem, read_reg(HL), read_reg(A)+1);       \
+			ADV_PC(1))                                          \
 	F(0x23, 8, "INC HL",                                                \
 			write_reg(HL, read_reg(HL)+1);                      \
 			ADV_PC(1))                                          \
@@ -788,7 +792,8 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0xc6, 0, "", return -1)                                           \
 	F(0xc7, 0, "", return -1)                                           \
 	F(0xc8, 0, "", return -1)                                           \
-	F(0xc9, 0, "", return -1)                                           \
+	F(0xc9, 8, "RET",                                                   \
+			write_reg(PC, pop()))                               \
 	F(0xca, 0, "", return -1)                                           \
 	F(0xcb, 4, "CB",                                                    \
 			return EXEC_CBP_INSTR(read_n()))                    \
@@ -841,7 +846,7 @@ int (*cbp_instrs[])() = { CBP_INSTR_TABLE(CBP_INSTR_FUNCNAMES) };
 	F(0xf2, 0, "", return -1)                                           \
 	F(0xf3, 0, "", return -1)                                           \
 	F(0xf4, 0, "", return -1)                                           \
-	F(0xf5, 0, "", return -1)                                           \
+	F(0xf5, 16, "PUSH AF", push(read_reg(AF)); ADV_PC(1))               \
 	F(0xf6, 0, "", return -1)                                           \
 	F(0xf7, 0, "", return -1)                                           \
 	F(0xf8, 0, "", return -1)                                           \
