@@ -17,6 +17,7 @@ Yet another C GB emulator!
 - [ ] ROM parser
 - [ ] Graphics subsystem
 - [ ] Fancy debugger
+- [ ] Game Link Cable
 - [ ] Other stuff
 
 ## Helpful Resources
@@ -26,3 +27,4 @@ Yet another C GB emulator!
 - [Game Boy CPU instruction set guide](http://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
 - [z80 Heaven](http://z80-heaven.wikidot.com/)
 - [z80.info](http://www.z80.info/)
+- [Gameboy BIOS](http://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM)
