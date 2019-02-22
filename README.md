@@ -1,6 +1,6 @@
 # Yacgb
 
-Yet another C GB emulator!
+Yet another C GB emulator! Highly WIP.
 
 ## Building
 
