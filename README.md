@@ -13,7 +13,7 @@ Yet another C GB emulator!
 - [ ] CPU
 	- [X] BIOS instructions
 	- [ ] The rest!
-- [ ] Memory
+- [X] Memory
 - [ ] ROM parser
 - [ ] Graphics subsystem
 - [ ] Fancy debugger
