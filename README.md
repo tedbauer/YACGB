@@ -4,10 +4,16 @@ Yet another C GB emulator!
 
 ## Building
 
-- `make`: Build & run
-- `make debug`: Build & run with debugging output
-- `make emu`: Create binary executable `emu`
-- `make clean`: Clean up build stuff and executable
+Yacgb requires [SDL2](https://www.libsdl.org/download-2.0.php). I recommend installing it with [Homebrew](https://brew.sh/):
+```
+brew install sdl2
+```
+
+Then, you can:
+- `make` to build & run
+- `make debug` to build & run with debugging output
+- `make emu` to create binary executable `emu`
+- `make clean` to clean up build stuff
 
 ## Tasks
 - [ ] CPU
