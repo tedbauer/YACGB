@@ -9,7 +9,14 @@ int main() {
 	init_cpu(mem);
 	init_screen();
 
-	while(1) {
+	SDL_Event e;
+
+	while (1) {
+		while(SDL_PollEvent(&e) != 0) {
+			if (e.type == SDL_QUIT) {
+				return 0;
+			}
+		}
 		draw_screen();
 	}
 
