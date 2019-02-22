@@ -44,7 +44,11 @@ int step_gpu(int cycles) {
 			}
 			break;
 		case M_VBLANK:
-			assert(0); /* FIXME: implement me */
+			if (cycles >= VBLANK_CYCLES) {
+				gpu_clock   = 0;
+				screen_line = 0;
+				mode = M_OAMSCAN;
+			}
 			break;
 		case M_OAMSCAN:
 			if (cycles >= OAM_CYCLES) {
