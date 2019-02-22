@@ -11,7 +11,7 @@ Yet another C GB emulator!
 
 ## Tasks
 - [ ] CPU
-	- [ ] BIOS instructions
+	- [X] BIOS instructions
 	- [ ] The rest!
 - [ ] Memory
 - [ ] ROM parser
