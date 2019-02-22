@@ -2,6 +2,7 @@
 
 CC = gcc
 CFLAGS = -g -Wall
+SDLFLAGS = $(shell sdl2-config --libs --cflags)
 
 all: run
 
@@ -11,8 +12,12 @@ debug: run
 run: emu
 	./emu
 
-emu: emu.o cpu.o mem.o
-	$(CC) $(CFLAGS) -o emu emu.o cpu.o mem.o
+emu: emu.o cpu.o mem.o screen.o
+	$(CC) $(SDLFLAGS) $(CFLAGS) -o emu emu.o cpu.o mem.o screen.o
+
+screen.o: screen.c screen.h
+	$(CC) $(SDLFLAGS) -c screen.c
+
 
 cpu.o: cpu.c cpu.h mem.c mem.h
 	$(CC) $(CFLAGS) -c cpu.c
