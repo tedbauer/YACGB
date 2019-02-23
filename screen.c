@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
+#include "assert.h"
 
 const int SCREEN_WIDTH = 160;
 const int SCREEN_HEIGHT = 144;
@@ -18,27 +19,32 @@ int init_screen() {
 		SDL_WINDOW_OPENGL
 	);
 	renderer = SDL_CreateRenderer(window, -1, 0);
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-	SDL_RenderClear(renderer);
-	/*
-	SDL_RenderClear(renderer);
-	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-	int i;
-	for (i = 0; i < SCREEN_WIDTH; i++) {
-		SDL_RenderDrawPoint(renderer, i, i);
-	}
-	SDL_RenderPresent(renderer);
-	*/
 	return 0;
 }
 
-int draw_screen() {
-	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-	int i;
-	for (i = 0; i < SCREEN_WIDTH; i++) {
-		SDL_RenderDrawPoint(renderer, i, i);
+int draw_screen(int pmap[160][144]) {
+	SDL_RenderClear(renderer);
+	for (int i = 0; i < 160; i++) {
+		for (int j = 0; j < 144; j++) {
+			switch (pmap[i][j]) {
+				case 0:
+					SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+					break;
+				case 1:
+					SDL_SetRenderDrawColor(renderer, 192, 192, 192, 192);
+					break;
+				case 2:
+					SDL_SetRenderDrawColor(renderer, 96, 96, 96, 96);
+					break;
+				case 3:
+					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+					break;
+				default:
+					assert(0);
+			}
+			SDL_RenderDrawPoint(renderer, i, i);
+		}
 	}
-	SDL_RenderPresent(renderer);
 	return 0;
 }
 

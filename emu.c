@@ -2,6 +2,7 @@
 #include "cpu.h"
 #include "mem.h"
 #include "screen.h"
+#include "gpu.h"
 #include <SDL2/SDL.h>
 
 int main() {
@@ -17,7 +18,8 @@ int main() {
 				return 0;
 			}
 		}
-		draw_screen();
+		//step_cpu();
+		step_gpu();
 	}
 
 	return 0;

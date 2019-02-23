@@ -1,12 +1,17 @@
 #include "mem.h"
 #include "assert.h"
+#include "screen.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 typedef enum {
 	M_HBLANK  =0,
 	M_VBLANK  =1,
 	M_OAMSCAN =2,
 	M_VRAMSCAN=3
-} mode_t;
+} gmode_t;
+
+int pixmap[160][144];
 
 const int HBLANK_CYCLES  = 204;
 const int VBLANK_CYCLES  = 4560;
@@ -15,15 +20,25 @@ const int VRAM_CYCLES    = 172;
 
 const int NUM_LINES = 144;
 
-mode_t mode;
+gmode_t mode;
 int gpu_clock;
 int screen_line;
 mem_state_t* mem;
+
+int renderscan() {
+	for (int i = 0; i < 160; i++) {
+		for (int j = 0; j < 144; j++) {
+			pixmap[i][j] = 3;
+		}
+	}
+	return 0;
+}
 
 int init_gpu(mem_state_t* new_mem) {
 	mem         = new_mem;
 	gpu_clock   = 0;
 	screen_line = 0;
+	//renderscan();
 	return 0;
 }
 
@@ -35,8 +50,7 @@ int step_gpu(int cycles) {
 				screen_line += 1;
 				gpu_clock = 0;
 				if (screen_line >= NUM_LINES) {
-					/* TODO: Write framebuffer to screen! */
-					assert(0);
+					draw_screen(pixmap);
 					mode = M_VBLANK;
 				} else {
 					mode = M_OAMSCAN;
@@ -60,8 +74,7 @@ int step_gpu(int cycles) {
 			if (cycles >= VRAM_CYCLES) {
 				gpu_clock = 0;
 				mode = M_HBLANK;
-				/* FIXME: do scanline stuff */
-				assert(0);
+				renderscan();
 			}
 			break;
 		default:
