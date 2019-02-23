@@ -28,7 +28,7 @@ mem_state_t* mem;
 int renderscan() {
 	for (int i = 0; i < 160; i++) {
 		for (int j = 0; j < 144; j++) {
-			pixmap[i][j] = 3;
+			pixmap[i][j] = 0;
 		}
 	}
 	return 0;

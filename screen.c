@@ -23,7 +23,6 @@ int init_screen() {
 }
 
 int draw_screen(int pmap[160][144]) {
-	SDL_RenderClear(renderer);
 	for (int i = 0; i < 160; i++) {
 		for (int j = 0; j < 144; j++) {
 			switch (pmap[i][j]) {
@@ -42,9 +41,10 @@ int draw_screen(int pmap[160][144]) {
 				default:
 					assert(0);
 			}
-			SDL_RenderDrawPoint(renderer, i, i);
+			SDL_RenderDrawPoint(renderer, i, j);
 		}
 	}
+	SDL_RenderPresent(renderer);
 	return 0;
 }
 
