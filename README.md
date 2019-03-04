@@ -4,11 +4,15 @@ Yet another C GB emulator! Highly WIP.
 
 ## Building
 
-Yacgb requires [SDL2](https://www.libsdl.org/download-2.0.php). If you're on a Mac, I recommend installing it with [Homebrew](https://brew.sh/) by typing `brew install sdl2`. Then, you can:
+Yacgb requires [SDL2][sdl]. If you're on a Mac, I recommend installing
+it with [Homebrew][brew] by typing `brew install sdl2`. Then, you can:
 - `make` to build & run
 - `make debug` to build & run with debugging output
 - `make emu` to create binary executable `emu`
 - `make clean` to clean up build stuff
+
+[sdl]: https://www.libsdl.org/download-2.0.php
+[brew]: https://brew.sh/
 
 ## Tasks
 - [ ] CPU
