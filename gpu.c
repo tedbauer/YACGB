@@ -20,6 +20,9 @@ const int VRAM_CYCLES    = 172;
 
 const int NUM_LINES = 144;
 
+int scroll_x;
+int scroll_y;
+
 gmode_t mode;
 int gpu_clock;
 int screen_line;
@@ -38,7 +41,6 @@ int init_gpu(mem_state_t* new_mem) {
 	mem         = new_mem;
 	gpu_clock   = 0;
 	screen_line = 0;
-	//renderscan();
 	return 0;
 }
 

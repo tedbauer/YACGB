@@ -22,10 +22,18 @@ Yacgb requires [SDL2](https://www.libsdl.org/download-2.0.php). If you're on a M
 - [ ] Other stuff
 
 ## Helpful Resources
-- [Imran Nazar's GB emulator resources](http://imrannazar.com/GameBoy-Emulation-in-JavaScript)
-- [Tomek's GB emulation blog post](https://blog.rekawek.eu/2017/02/09/coffee-gb/)
-- [Game Boy CPU manual](http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf)
-- [Game Boy CPU instruction set guide](http://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
-- [z80 Heaven](http://z80-heaven.wikidot.com/)
-- [z80.info](http://www.z80.info/)
-- [Gameboy BIOS](http://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM)
+- [Imran Nazar's GB emulator resources][1]
+- [Tomek's GB emulation blog post][2]
+- [Game Boy CPU manual][3]
+- [Game Boy CPU instruction set guide][4]
+- [z80 Heaven][5]
+- [z80.info][6]
+- [Gameboy BIOS][7]
+
+[1]: http://imrannazar.com/GameBoy-Emulation-in-JavaScript
+[2]: https://blog.rekawek.eu/2017/02/09/coffee-gb/
+[3]: http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
+[4]: http://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html
+[5]: http://z80-heaven.wikidot.com/
+[6]: http://www.z80.info/
+[7]: http://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM
