@@ -18,7 +18,7 @@ int main() {
 				return 0;
 			}
 		}
-		//step_cpu();
+		step_cpu();
 		step_gpu();
 	}
 
