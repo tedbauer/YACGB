@@ -1,6 +1,6 @@
-#include "mem.h"
+#include "../include/mem.h"
 #include "assert.h"
-#include "screen.h"
+#include "../include/screen.h"
 #include <stdlib.h>
 #include <stdio.h>
 

@@ -1,6 +1,6 @@
 #include "stdint.h"
 #include "string.h"
-#include "mem.h"
+#include "../include/mem.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>

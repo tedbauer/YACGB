@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include "cpu.h"
-#include "mem.h"
-#include "screen.h"
-#include "gpu.h"
+#include "../include/cpu.h"
+#include "../include/mem.h"
+#include "../include/screen.h"
+#include "../include/gpu.h"
 #include <SDL2/SDL.h>
 
 int main() {
